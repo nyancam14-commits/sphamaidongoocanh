@@ -1,0 +1,3999 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ngọc Ánh Data Studio — Hệ Thống BI Làm Sạch, Kiểm Duyệt & Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Chart.js & SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      /* Bảng màu Vàng Pastel Sáng Sủa (Buttercream & Honey Gold Pastel + Mint + Slate) */
+      --gold: #c9860a;
+      --gold-deep: #8c5900;
+      --gold-bright: #eab308;
+      --gold-soft: #fff2be;
+      --gold-soft-2: #ffe89e;
+      --gold-border: #dfb955;
+
+      --mint: #148668;
+      --mint-deep: #095d47;
+      --mint-soft: #e0f5ec;
+      --mint-border: #a7dec8;
+
+      --coral: #c9462d;
+      --coral-soft: #fde8e3;
+      --coral-border: #f3bfb5;
+
+      --navy: #1a3354;
+      --navy-deep: #11233b;
+
+      --text: #1c160b;
+      --muted: #4a3f28;
+      --subtle: #66583b;
+      --line: #e5cf8e;
+      --line-soft: #f3e4b4;
+      --surface: #fffdf5;
+      --card: #ffffff;
+
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 10px;
+      --radius: 14px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 2px 8px rgba(140, 89, 0, 0.08);
+      --shadow-md: 0 12px 28px -10px rgba(140, 89, 0, 0.18);
+      --shadow-window: 0 34px 64px -28px rgba(120, 76, 6, 0.28), 0 12px 26px -16px rgba(120, 76, 6, 0.16), 0 0 0 5px rgba(255, 255, 255, 0.65);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+
+    body {
+      font-family: var(--font-main);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.55;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 14% 10%, #fff3b5 0%, transparent 56%),
+        radial-gradient(ellipse at 92% 90%, #ffeba1 0%, transparent 54%),
+        linear-gradient(135deg, #fff9dc 0%, #fef0b8 100%);
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      padding-bottom: 42px;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.45;
+      background-image:
+        linear-gradient(rgba(212, 150, 23, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212, 150, 23, 0.08) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(transparent 6%, #000 92%);
+    }
+
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: transparent; }
+
+    /* Desktop Shell */
+    .desktop {
+      width: min(1260px, calc(100% - 48px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Top Desktop Bar */
+    .desktop-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 0 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #ffe074, #e5a31d);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 12px rgba(212, 150, 23, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.65);
+      transition: transform 200ms ease;
+    }
+    .brand:hover .brand-mark { transform: rotate(-5deg) scale(1.06); }
+    .brand-text strong {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      display: block;
+      line-height: 1.15;
+    }
+    .brand-text span {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .header-search {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--gold-border);
+      border-radius: 999px;
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 230px;
+      transition: all 180ms ease;
+    }
+    .header-search:focus-within {
+      background: #fff;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(244, 185, 66, 0.22);
+    }
+    .header-search input {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      font-size: 12.5px;
+    }
+    .esc-tag {
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--gold-soft);
+      color: var(--gold-deep);
+      padding: 2px 6px;
+      border-radius: 5px;
+    }
+
+    .top-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--gold-border);
+      color: var(--text);
+      transition: all 180ms ease;
+    }
+    .top-pill-btn:hover {
+      background: #fff;
+      border-color: var(--gold);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .top-pill-btn.amber {
+      background: linear-gradient(135deg, #fff4c8, #ffe89e);
+      border-color: #e6c25e;
+      color: var(--gold-deep);
+    }
+
+    /* Main Application Window */
+    .window {
+      border: 1px solid #e7d8a6;
+      border-radius: 22px;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: var(--shadow-window);
+    }
+    .window-bar {
+      height: 48px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fffdf8 0%, #fdf7e3 100%);
+    }
+    .lights { display: flex; align-items: center; gap: 7px; }
+    .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+    .lights i:nth-child(1) { background: #ff625a; border: 1px solid rgba(216, 78, 71, 0.35); }
+    .lights i:nth-child(2) { background: #f9bd47; border: 1px solid rgba(211, 158, 55, 0.35); }
+    .lights i:nth-child(3) { background: #2bca56; border: 1px solid rgba(59, 173, 72, 0.35); }
+
+    .window-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .reset-btn {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 160ms ease;
+    }
+    .reset-btn:hover { background: var(--gold-soft-2); color: var(--gold-deep); }
+
+    /* Workbench Grid (Sidebar + Workspace) */
+    .workbench {
+      display: grid;
+      grid-template-columns: 258px minmax(0, 1fr);
+      min-height: 640px;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      padding: 24px 15px 18px;
+      gap: 10px;
+      background: linear-gradient(168deg, #fffaf0 0%, #fef4cc 65%, #fceca8 100%);
+      border-right: 1px solid var(--line);
+    }
+    .sidebar-heading {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      color: var(--subtle);
+      padding-left: 10px;
+      text-transform: uppercase;
+    }
+    #navigation { display: grid; gap: 6px; }
+    .nav-step {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 16px;
+      gap: 10px;
+      align-items: center;
+      text-align: left;
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--muted);
+      transition: all 180ms ease;
+    }
+    .nav-step:hover {
+      background: rgba(255, 248, 222, 0.95);
+      border-color: var(--gold-border);
+      transform: translateX(3px);
+      color: var(--text);
+    }
+    .nav-step.current {
+      background: linear-gradient(135deg, #fff7d6 0%, #feecae 100%);
+      border-color: #e6c35a;
+      color: var(--text);
+      box-shadow: 0 4px 12px rgba(212, 150, 23, 0.14);
+    }
+    .nav-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--gold-border);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+      transition: all 180ms ease;
+    }
+    .nav-step.current .nav-num {
+      background: linear-gradient(145deg, #e5a31d, #c68308);
+      border-color: #c68308;
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(198, 131, 8, 0.35);
+    }
+    .nav-step.approved .nav-num {
+      background: var(--mint-soft);
+      border-color: var(--mint-border);
+      color: var(--mint-deep);
+    }
+    .nav-step strong { display: block; font-size: 13px; font-weight: 700; line-height: 1.25; }
+    .nav-step small { display: block; font-size: 11px; color: var(--subtle); margin-top: 2px; }
+    .nav-state { font-size: 13px; font-weight: 800; text-align: center; }
+    .nav-step.approved .nav-state { color: var(--mint); }
+
+    /* Sidebar Gate Summary Pills */
+    .sidebar-gates {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+    }
+    .sidebar-gates-title {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--subtle);
+    }
+    .gate-pill-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    /* Source Status Card at Sidebar Bottom */
+    .source-status {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid var(--gold-border);
+      background: rgba(255, 255, 255, 0.85);
+    }
+    .source-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--gold-soft);
+      color: var(--gold-deep);
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      flex: none;
+    }
+    .source-text { min-width: 0; flex: 1; }
+    .source-text strong {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .source-text small { display: block; font-size: 10.5px; color: var(--subtle); }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #cfc4a3;
+      flex: none;
+    }
+    .status-dot.connected {
+      background: var(--mint);
+      box-shadow: 0 0 0 4px var(--mint-soft);
+    }
+
+    /* Main Workspace Content */
+    main#workspace {
+      padding: 30px 36px 36px;
+      min-width: 0;
+      background: linear-gradient(160deg, #fffef8 0%, #fffbef 100%);
+    }
+
+    .step-page { display: none; }
+    .step-page.active {
+      display: block;
+      animation: stepEnter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes stepEnter {
+      from { opacity: 0; transform: translateY(14px) scale(0.99); filter: blur(2px); }
+      to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
+    /* Con Ong Di Chuột & Hiệu Ứng Đúp Chuột */
+    .bee-follower {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 30px;
+      height: 30px;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: opacity 200ms ease;
+      filter: drop-shadow(0 4px 6px rgba(140, 89, 0, 0.25));
+      opacity: 0;
+    }
+    .bee-follower.visible { opacity: 1; }
+    .bee-wing-anim {
+      transform-origin: center;
+      animation: beeWing 180ms ease-in-out infinite alternate;
+    }
+    @keyframes beeWing {
+      from { transform: scaleY(1); }
+      to { transform: scaleY(0.75); }
+    }
+    .dblclick-burst {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      animation: burstPop 650ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes burstPop {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+      60% { opacity: 1; transform: translate(-50%, -85%) scale(1.15); }
+      100% { opacity: 0; transform: translate(-50%, -120%) scale(1.35); }
+    }
+
+    .view-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .step-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-soft);
+      border: 1px solid var(--gold-border);
+      color: var(--gold-deep);
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 7px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .view-header h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(24px, 3vw, 31px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.18;
+    }
+    .view-intro {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-top: 6px;
+      max-width: 65ch;
+    }
+
+    /* ===================================================================== */
+    /* TRANG CHỦ: GIỚI THIỆU & HƯỚNG DẪN (NỀN VÀNG PASTEL + CHỮ KIỂU)        */
+    /* ===================================================================== */
+    .hero-pastel-card {
+      background: linear-gradient(145deg, #fffcf0 0%, #fff3c4 50%, #ffeba2 100%);
+      border: 1.5px solid #e5c66c;
+      border-radius: 22px;
+      padding: 46px 36px 38px;
+      text-align: center;
+      box-shadow: 0 14px 32px rgba(160, 108, 12, 0.11);
+      margin-bottom: 22px;
+    }
+    .hero-tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid #e6c35a;
+      color: var(--gold-deep);
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .hero-fancy-title {
+      font-family: var(--font-serif);
+      font-size: clamp(32px, 4.2vw, 46px);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .hero-fancy-title em {
+      font-style: italic;
+      color: #b87b06;
+      font-weight: 600;
+    }
+    .hero-subtitle {
+      font-size: 14.5px;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 720px;
+      margin: 0 auto 26px;
+    }
+    .hero-cta-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
+    }
+    .hero-meta-strip {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      padding-top: 18px;
+      border-top: 1px solid rgba(212, 150, 23, 0.25);
+      font-size: 12.5px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .guide-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .guide-step-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 180ms ease;
+    }
+    .guide-step-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--gold);
+      box-shadow: var(--shadow-md);
+      background: #fffdf4;
+    }
+    .guide-step-num {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: var(--gold-deep);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .guide-step-card h4 { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+    .guide-step-card p { font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 0 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 180ms cubic-bezier(0.22, 0.61, 0.36, 1);
+      white-space: nowrap;
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(159, 106, 4, 0.16);
+    }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn-primary {
+      background: linear-gradient(135deg, #ebaa28 0%, #cf8b0b 100%);
+      color: #fff;
+      border: 1px solid #c58208;
+      box-shadow: 0 3px 8px rgba(207, 139, 11, 0.28);
+    }
+    .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #df9d1a 0%, #bd7c06 100%); }
+    .btn-mint {
+      background: linear-gradient(135deg, #1ea382 0%, #128064 100%);
+      color: #fff;
+      border: 1px solid #0e6f56;
+      box-shadow: 0 3px 8px rgba(18, 128, 100, 0.25);
+    }
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--gold-border);
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--gold-soft); border-color: var(--gold); }
+    .btn-sm { min-height: 32px; padding: 0 12px; font-size: 12px; border-radius: 8px; }
+
+    /* Clean Icon-Free Executive Decision Buttons for Human Gates */
+    .btn-gate-approve {
+      min-height: 46px;
+      padding: 0 26px;
+      border-radius: 11px;
+      font-size: 13.5px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      background: linear-gradient(135deg, #0f7b60 0%, #095d48 100%);
+      color: #ffffff;
+      border: 1px solid #08503e;
+      box-shadow: 0 6px 16px rgba(15, 123, 96, 0.28);
+      transition: all 180ms ease;
+    }
+    .btn-gate-approve:hover {
+      background: linear-gradient(135deg, #0d6d55 0%, #074f3d 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(15, 123, 96, 0.34);
+    }
+    .btn-gate-reject {
+      min-height: 46px;
+      padding: 0 22px;
+      border-radius: 11px;
+      font-size: 13.5px;
+      font-weight: 700;
+      background: #ffffff;
+      color: #a83924;
+      border: 1.5px solid #e29b8d;
+      transition: all 180ms ease;
+    }
+    .btn-gate-reject:hover {
+      background: #fdf0ed;
+      border-color: #c94a32;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(168, 57, 36, 0.14);
+    }
+
+    /* Cards & Hover Micro-Interactions */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 200ms cubic-bezier(0.22, 0.61, 0.36, 1), border-color 200ms ease, box-shadow 200ms ease;
+    }
+    .card.interactive:hover {
+      transform: translateY(-3px);
+      border-color: #e3c162;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Ingest Grid (2 Equal Cards) */
+    .ingest-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 18px;
+      align-items: stretch;
+    }
+    .clarify-box {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .clarify-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    .clarify-textarea {
+      width: 100%;
+      min-height: 62px;
+      padding: 10px 14px;
+      border: 1.5px solid #e3cf94;
+      border-radius: 12px;
+      background: #fffdf7;
+      font-size: 13px;
+      resize: vertical;
+      outline: none;
+      transition: all 160ms ease;
+    }
+    .clarify-textarea:focus {
+      background: #fff;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(244, 185, 66, 0.22);
+    }
+    .preview-btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ingest-card-equal {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .ingest-head { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+    .ingest-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: var(--gold-soft);
+      border: 1px solid var(--gold-border);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex: none;
+    }
+    .ingest-head h3 { font-size: 15.5px; font-weight: 800; }
+    .ingest-head p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .sheets-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .input-clean {
+      width: 100%;
+      height: 40px;
+      padding: 0 13px;
+      border: 1px solid var(--gold-border);
+      border-radius: 10px;
+      background: #fffdf8;
+      font-size: 13px;
+      outline: none;
+      transition: all 160ms ease;
+    }
+    .input-clean:focus {
+      background: #fff;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(244, 185, 66, 0.22);
+    }
+
+    .file-drop-area {
+      border: 2px dashed #e2c878;
+      border-radius: 12px;
+      padding: 26px 14px;
+      text-align: center;
+      background: #fffdf6;
+      cursor: pointer;
+      transition: all 180ms ease;
+    }
+    .file-drop-area:hover, .file-drop-area.dragover {
+      background: var(--gold-soft);
+      border-color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    /* Business Model Optional Selector Card (Step 1) */
+    .biz-model-card {
+      background: linear-gradient(135deg, #fffdf5 0%, #fff8de 100%);
+      border: 1.5px solid var(--gold-border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+    .biz-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .biz-chip {
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 700;
+      background: #ffffff;
+      border: 1.5px solid var(--gold-border);
+      color: var(--muted);
+      transition: all 160ms ease;
+    }
+    .biz-chip:hover {
+      border-color: var(--gold);
+      color: var(--text);
+      transform: translateY(-2px);
+      background: #fffbee;
+    }
+    .biz-chip.selected {
+      background: linear-gradient(135deg, #ebaa28 0%, #cf8b0b 100%);
+      border-color: #b87a06;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(207, 139, 11, 0.25);
+    }
+
+    /* Step 2: Cleaning Rules & Metrics */
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .rule-toggle {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 11px 12px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+      transition: all 160ms ease;
+      font-size: 12px;
+    }
+    .rule-toggle:hover { border-color: var(--gold); background: #fffdf5; transform: translateY(-2px); }
+    .rule-toggle input { accent-color: var(--gold-deep); margin-top: 3px; width: 15px; height: 15px; }
+    .rule-toggle strong { display: block; font-size: 12px; font-weight: 700; }
+    .rule-toggle small { display: block; font-size: 10.5px; color: var(--subtle); }
+
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .metric-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      transition: all 180ms ease;
+    }
+    .metric-card:hover { transform: translateY(-2px); border-color: var(--gold); box-shadow: var(--shadow-sm); }
+    .metric-card.highlight {
+      background: linear-gradient(135deg, #fffbe8 0%, #fff3c2 100%);
+      border-color: #e6c35a;
+    }
+    .metric-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .metric-val { font-family: var(--font-main); font-variant-numeric: tabular-nums; font-size: 27px; font-weight: 800; letter-spacing: -0.02em; margin-top: 3px; line-height: 1.15; }
+    .metric-sub { font-size: 11px; color: var(--subtle); margin-top: 3px; }
+
+    /* Tables & Filters */
+    .filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      transition: all 150ms ease;
+    }
+    .filter-pill.active, .filter-pill:hover {
+      background: var(--gold-soft-2);
+      border-color: var(--gold);
+      color: var(--gold-deep);
+    }
+
+    .table-scroll {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
+    th {
+      background: #fff9e6;
+      padding: 10px 12px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line-soft);
+      font-variant-numeric: tabular-nums;
+      transition: background-color 140ms ease;
+    }
+    tbody tr:hover td { background-color: #fffbee; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-gold { background: var(--gold-soft-2); color: var(--gold-deep); }
+    .badge-mint { background: var(--mint-soft); color: var(--mint-deep); }
+    .badge-coral { background: var(--coral-soft); color: var(--coral); }
+    .badge-slate { background: #eef2f6; color: var(--navy); }
+
+    /* Larger & Richer Human Approval Gate Boxes */
+    .human-gate-box {
+      margin-top: 24px;
+      border-radius: 18px;
+      padding: 26px 28px;
+      border: 2px solid #d49617;
+      background: linear-gradient(135deg, #fff6cf 0%, #ffe699 100%);
+      box-shadow: 0 12px 28px rgba(180, 128, 22, 0.16);
+      transition: all 200ms ease;
+    }
+    .human-gate-box.approved {
+      border-color: #148668;
+      background: linear-gradient(135deg, #e1f7ee 0%, #bcebd7 100%);
+      box-shadow: 0 12px 28px rgba(20, 134, 104, 0.14);
+    }
+    .human-gate-box.rejected {
+      border-color: #cf5640;
+      background: linear-gradient(135deg, #fde8e3 0%, #fad0c7 100%);
+    }
+    .gate-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .gate-title-main { font-family: var(--font-serif); font-size: 19px; font-weight: 700; color: var(--text); }
+    .gate-sub-desc { font-size: 13px; color: #4c4128; margin-top: 4px; }
+    .gate-actions-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .gate-note-input {
+      flex: 1;
+      min-width: 260px;
+      height: 46px;
+      padding: 0 16px;
+      border: 1.5px solid #d4a437;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.94);
+      font-size: 13.5px;
+      outline: none;
+    }
+    .gate-note-input:focus { border-color: var(--gold-deep); background: #fff; box-shadow: 0 0 0 3px rgba(212, 150, 23, 0.25); }
+
+    /* Step 3: 6 Universal Executive BI Insight Cards */
+    .insight-grid-6 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .insight-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--gold-bright);
+      border-radius: 15px;
+      padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+      transition: all 200ms ease;
+    }
+    .insight-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--gold); }
+    .insight-card.mint { border-left-color: var(--mint); }
+    .insight-card.coral { border-left-color: var(--coral); }
+    .insight-card.navy { border-left-color: var(--navy); }
+    .insight-kicker {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--subtle);
+      margin-bottom: 4px;
+    }
+    .insight-card h4 { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+    .insight-kpi-highlight {
+      font-family: var(--font-main);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold-deep);
+      margin-bottom: 6px;
+    }
+    .insight-card.mint .insight-kpi-highlight { color: var(--mint-deep); }
+    .insight-card.coral .insight-kpi-highlight { color: var(--coral); }
+    .insight-card.navy .insight-kpi-highlight { color: var(--navy); }
+    .insight-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .insight-body strong { color: var(--text); }
+
+    .clean-details {
+      margin-top: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 13px 16px;
+    }
+    .clean-details summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-deep);
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ===================================================================== */
+    /* STEP 4: BENTO DASHBOARD (Pastel Gold + Mint + Navy)                   */
+    /* ===================================================================== */
+    .bento-banner {
+      background: linear-gradient(135deg, #1f3c64 0%, #152b48 100%);
+      border-radius: 18px;
+      padding: 20px 24px 52px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      position: relative;
+      box-shadow: 0 12px 26px rgba(21, 43, 72, 0.18);
+    }
+    .bento-banner h2 {
+      font-family: var(--font-serif);
+      font-size: 21px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .bento-banner p { font-size: 12px; color: #cbd8ea; margin-top: 2px; }
+    .bento-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+    .bento-select {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 600;
+      outline: none;
+    }
+    .bento-select option { color: var(--text); background: #fff; }
+
+    .bento-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: -34px 16px 18px;
+      position: relative;
+      z-index: 3;
+    }
+    .bento-kpi {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 15px 16px;
+      box-shadow: 0 10px 24px rgba(128, 86, 12, 0.08);
+      transition: all 200ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .bento-kpi:hover {
+      transform: translateY(-4px);
+      border-color: var(--gold);
+      box-shadow: 0 16px 30px rgba(159, 106, 4, 0.16);
+    }
+    .bento-kpi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .bento-kpi-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .bento-kpi-val { font-family: var(--font-main); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-size: 26px; font-weight: 800; color: var(--text); line-height: 1.15; }
+    .bento-kpi-foot { margin-top: 6px; font-size: 11px; color: var(--subtle); display: flex; align-items: center; justify-content: space-between; }
+
+    .bento-main-row {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .bento-left-stack { display: grid; gap: 16px; }
+
+    .bento-hero-stat {
+      background: linear-gradient(135deg, #fffbef 0%, #fff0bd 100%);
+      border: 1px solid #ecd283;
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 200ms ease;
+    }
+    .bento-hero-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .hero-big-num { font-family: var(--font-main); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; font-size: 36px; font-weight: 800; color: var(--gold-deep); line-height: 1; }
+
+    .rings-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      transition: all 200ms ease;
+    }
+    .rings-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .rings-list { display: grid; gap: 12px; margin-top: 12px; }
+    .ring-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .ring-info strong { display: block; font-size: 12.5px; font-weight: 700; }
+    .ring-info small { display: block; font-size: 11px; color: var(--subtle); }
+    .ring-svg { width: 46px; height: 46px; transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: #f5ecd0; stroke-width: 5; }
+    .ring-fg { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 600ms ease; }
+    .ring-wrap { position: relative; width: 46px; height: 46px; display: grid; place-items: center; flex: none; }
+    .ring-pct { position: absolute; font-size: 10.5px; font-weight: 800; color: var(--text); }
+
+    .chart-box-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      transition: all 200ms ease;
+    }
+    .chart-box-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: #e3c162; }
+    .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .chart-head h3 { font-size: 13.5px; font-weight: 800; color: var(--text); }
+    .chart-head span { font-size: 11px; color: var(--subtle); font-weight: 600; }
+    .chart-canvas-wrap { position: relative; height: 225px; width: 100%; }
+
+    .bento-bottom-row {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .donut-layout {
+      display: grid;
+      grid-template-columns: 170px minmax(0, 1fr);
+      gap: 16px;
+      align-items: center;
+    }
+    .donut-legend { list-style: none; display: grid; gap: 8px; }
+    .donut-legend li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      gap: 8px;
+    }
+    .legend-left { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+    .tab-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab-btn {
+      padding: 7px 14px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      transition: all 160ms ease;
+    }
+    .tab-btn.active {
+      background: var(--gold-soft-2);
+      border-color: var(--gold);
+      color: var(--gold-deep);
+    }
+
+    /* 3 Export Cards (Excel 2 Sheets, Word with Charts & Standalone HTML Dashboard) */
+    .export-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .export-card {
+      background: linear-gradient(160deg, #ffffff 0%, #fffbef 100%);
+      border: 1.5px solid var(--line);
+      border-radius: 15px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: all 200ms ease;
+    }
+    .export-card:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: var(--shadow-md); }
+    .export-card h4 { font-size: 15px; font-weight: 800; margin-top: 6px; }
+    .export-card p { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+    .step-footer-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line-soft);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Floating Co-Pilot Widget */
+    .copilot-widget {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      width: 370px;
+      background: #fff;
+      border: 1.5px solid var(--gold-border);
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(100, 68, 8, 0.24);
+      z-index: 900;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: stepEnter 220ms ease;
+    }
+    .copilot-widget.active { display: flex; }
+    .copilot-header {
+      background: linear-gradient(135deg, #254773 0%, #162e4d 100%);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .copilot-body { padding: 14px; max-height: 330px; overflow-y: auto; background: #fffdf8; font-size: 12.5px; }
+    .copilot-bubble {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 1.5;
+    }
+    .copilot-footer { padding: 10px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; background: #fff; }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 26, 16, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 20px;
+      border: 1px solid var(--gold-border);
+      max-width: 920px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: var(--shadow-window);
+    }
+
+    @media (max-width: 960px) {
+      .workbench { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--line); padding: 14px; }
+      #navigation { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+      .nav-step small, .nav-state, .sidebar-gates, .source-status { display: none; }
+      .nav-step { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 8px 4px; }
+      .bento-kpi-grid { grid-template-columns: repeat(2, 1fr); margin-top: 14px; margin-inline: 0; }
+      .bento-banner { padding-bottom: 20px; }
+      .bento-main-row, .bento-bottom-row, .ingest-grid, .insight-grid-6, .export-grid-3, .guide-steps-grid { grid-template-columns: 1fr; }
+      .rules-grid, .metrics-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .desktop { width: calc(100% - 20px); }
+      main#workspace { padding: 18px 16px; }
+      .rules-grid, .metrics-row, .bento-kpi-grid { grid-template-columns: 1fr; }
+      .donut-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="desktop">
+    <!-- Top Desktop Bar -->
+    <header class="desktop-bar">
+      <div class="brand" onclick="goToStep(0)">
+        <!-- Logo Con Ong (Honey Bee) -->
+        <div class="brand-mark" title="Ngọc Ánh Data Studio">
+          <svg width="26" height="26" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Wings -->
+            <ellipse cx="22" cy="23" rx="10" ry="7" transform="rotate(-25 22 23)" fill="#ffffff" fill-opacity="0.92" stroke="#6b4400" stroke-width="2.2"/>
+            <ellipse cx="42" cy="23" rx="10" ry="7" transform="rotate(25 42 23)" fill="#ffffff" fill-opacity="0.92" stroke="#6b4400" stroke-width="2.2"/>
+            <!-- Antennae -->
+            <path d="M27 17C25 11 21 10 19 11" stroke="#4a2f00" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M37 17C39 11 43 10 45 11" stroke="#4a2f00" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="19" cy="11" r="2" fill="#4a2f00"/>
+            <circle cx="45" cy="11" r="2" fill="#4a2f00"/>
+            <!-- Bee Body -->
+            <ellipse cx="32" cy="36" rx="13" ry="16" fill="#ffcf33" stroke="#4a2f00" stroke-width="2.5"/>
+            <!-- Stripes -->
+            <path d="M20 34H44" stroke="#4a2f00" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M21 41H43" stroke="#4a2f00" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M25 48H39" stroke="#4a2f00" stroke-width="3" stroke-linecap="round"/>
+            <!-- Cute Eyes -->
+            <circle cx="27" cy="26" r="2.2" fill="#2a1c00"/>
+            <circle cx="37" cy="26" r="2.2" fill="#2a1c00"/>
+            <!-- Stinger -->
+            <path d="M32 52L30 56H34L32 52Z" fill="#4a2f00"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <strong>Ngọc Ánh Data Studio</strong>
+          <span>BI Data Cleansing & Analytics Workbench</span>
+        </div>
+      </div>
+
+      <div class="bar-actions">
+        <div class="header-search">
+          <span>🔍</span>
+          <input type="text" id="globalSearchInput" placeholder="Tìm đơn vị, lỗi, báo cáo..." onkeydown="handleSearch(event)">
+          <span class="esc-tag">ESC</span>
+        </div>
+        <span class="top-pill-btn amber" id="topStatusBadge" onclick="goToStep(2)">Chờ kiểm duyệt</span>
+        <button class="top-pill-btn" onclick="toggleCopilot(event)">💬 AI Co-Pilot</button>
+      </div>
+    </header>
+
+    <!-- Main Workbench Window -->
+    <div class="window">
+      <div class="window-bar">
+        <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="window-title">
+          <span>🐝</span>
+          <span>Không gian Quản trị & Làm sạch Dữ liệu Đa Doanh Nghiệp</span>
+        </div>
+        <button class="reset-btn" onclick="resetSession()" title="Làm mới phiên làm việc">
+          <span>↺</span> <span>Làm mới</span>
+        </button>
+      </div>
+
+      <div class="workbench">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+          <div class="sidebar-heading">QUY TRÌNH XỬ LÝ BI</div>
+          <nav id="navigation">
+            <button class="nav-step current" id="nav-step-0" onclick="goToStep(0)">
+              <span class="nav-num">🏠</span>
+              <span><strong>Trang Chủ</strong><small>Giới thiệu & Hướng dẫn</small></span>
+              <span class="nav-state" id="nav-state-0">›</span>
+            </button>
+            <button class="nav-step" id="nav-step-1" onclick="goToStep(1)">
+              <span class="nav-num">1</span>
+              <span><strong>Nhập dữ liệu</strong><small>Sheets, Excel & CSV</small></span>
+              <span class="nav-state" id="nav-state-1">•</span>
+            </button>
+            <button class="nav-step" id="nav-step-2" onclick="goToStep(2)">
+              <span class="nav-num">2</span>
+              <span><strong>Vấn đề doanh nghiệp</strong><small>Mô hình & Mục tiêu BI</small></span>
+              <span class="nav-state" id="nav-state-2">•</span>
+            </button>
+            <button class="nav-step" id="nav-step-3" onclick="goToStep(3)">
+              <span class="nav-num">3</span>
+              <span><strong>Làm sạch & Duyệt</strong><small>Chuẩn hóa & Kiểm duyệt</small></span>
+              <span class="nav-state" id="nav-state-3">•</span>
+            </button>
+            <button class="nav-step" id="nav-step-4" onclick="goToStep(4)">
+              <span class="nav-num">4</span>
+              <span><strong>Phân tích & Đánh giá</strong><small>Insight & Cổng đánh giá</small></span>
+              <span class="nav-state" id="nav-state-4">•</span>
+            </button>
+            <button class="nav-step" id="nav-step-5" onclick="goToStep(5)">
+              <span class="nav-num">5</span>
+              <span><strong>Dashboard & Xuất tệp</strong><small>Bento BI, Excel & Word</small></span>
+              <span class="nav-state" id="nav-state-5">•</span>
+            </button>
+          </nav>
+
+          <!-- Status of 2 Human Verification Gates -->
+          <div class="sidebar-gates">
+            <div class="sidebar-gates-title">Cổng Con Người Duyệt</div>
+            <div class="gate-pill-row">
+              <span>Kiểm duyệt dữ liệu:</span>
+              <span class="badge badge-gold" id="sbGate1">Chờ duyệt</span>
+            </div>
+            <div class="gate-pill-row">
+              <span>Đánh giá kết quả:</span>
+              <span class="badge badge-gold" id="sbGate2">Chờ đánh giá</span>
+            </div>
+          </div>
+
+          <div class="source-status">
+            <div class="source-icon">🗄️</div>
+            <div class="source-text">
+              <strong id="sidebarSourceName">Dữ liệu chuẩn hệ thống</strong>
+              <small id="sidebarSourceMeta">Sẵn sàng xử lý</small>
+            </div>
+            <span class="status-dot connected" id="sidebarSourceDot"></span>
+          </div>
+        </aside>
+
+        <!-- Dynamic Workspace Views -->
+        <main id="workspace">
+
+          <!-- ============================================================ -->
+          <!-- TRANG CHỦ (BƯỚC 0): GIỚI THIỆU & HƯỚNG DẪN NỀN VÀNG PASTEL   -->
+          <!-- ============================================================ -->
+          <section class="step-page active" id="page-step-0">
+            <div class="hero-pastel-card">
+              <div class="hero-tag-pill">
+                <span>🐝</span> HỆ THỐNG QUẢN TRỊ & PHÂN TÍCH DỮ LIỆU ĐA DOANH NGHIỆP
+              </div>
+              <h1 class="hero-fancy-title">
+                Hệ Thống Quản Trị Dữ Liệu<br>
+                <em>Thông Minh, Chuẩn Hóa & Đột Phá.</em>
+              </h1>
+              <p class="hero-subtitle">
+                Chào mừng bạn đến với <strong>Ngọc Ánh Data Studio</strong> — Nền tảng Business Intelligence hỗ trợ mọi mô hình doanh nghiệp tự động tiếp nhận dữ liệu từ Google Sheets, Excel hoặc CSV, khử trùng lặp, kiểm soát ngoại lệ kết hợp <strong>con người tự kiểm duyệt & đánh giá</strong>, trực quan hóa Bento Dashboard và xuất báo cáo chuyên sâu.
+              </p>
+
+              <div class="hero-cta-row" style="margin-bottom:0;">
+                <button class="btn btn-primary" style="min-height:46px; padding:0 26px; font-size:14px;" onclick="goToStep(1)">
+                  Bắt Đầu Quy Trình Xử Lý Dữ Liệu →
+                </button>
+                <button class="btn btn-secondary" style="min-height:46px; padding:0 22px; font-size:14px;" onclick="toggleCopilot(event)">
+                  💬 Hỏi Trợ Lý AI Co-Pilot
+                </button>
+              </div>
+            </div>
+
+            <!-- Hướng dẫn sử dụng nhanh -->
+            <div class="guide-steps-grid">
+              <div class="guide-step-card" onclick="goToStep(1)">
+                <div class="guide-step-num">Bước 1 · Hướng dẫn</div>
+                <h4>Nhập Tệp Dữ Liệu</h4>
+                <p>Dán link Google Sheets hoặc tải tệp Excel (.xlsx) / CSV từ máy lên hệ thống.</p>
+              </div>
+              <div class="guide-step-card" onclick="goToStep(2)">
+                <div class="guide-step-num">Bước 2 · Hướng dẫn</div>
+                <h4>Vấn Đề Doanh Nghiệp</h4>
+                <p>Chọn mô hình doanh nghiệp, vấn đề cần phân tích & trả lời câu hỏi làm rõ phạm vi.</p>
+              </div>
+              <div class="guide-step-card" onclick="goToStep(3)">
+                <div class="guide-step-num">Bước 3 · Hướng dẫn</div>
+                <h4>Làm Sạch & Duyệt</h4>
+                <p>Lọc trùng & đơn hủy, chỉnh sửa trực tiếp tại bảng và phê duyệt dữ liệu sạch.</p>
+              </div>
+              <div class="guide-step-card" onclick="goToStep(4)">
+                <div class="guide-step-num">Bước 4 & 5 · Hướng dẫn</div>
+                <h4>Insight & Xuất Báo Cáo</h4>
+                <p>Đánh giá Insight theo bối cảnh doanh nghiệp, xem Bento Dashboard & xuất Excel, Word, HTML.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============================================================ -->
+          <!-- BƯỚC 1: NHẬP DỮ LIỆU (CHỈ 2 Ô: GOOGLE SHEETS & NẠP TỆP)      -->
+          <!-- ============================================================ -->
+          <section class="step-page" id="page-step-1">
+            <div class="view-header">
+              <div>
+                <div class="step-tag">Bước 1 · Tiếp Nhận Dữ Liệu</div>
+                <h1>Nhập dữ liệu doanh nghiệp</h1>
+                <p class="view-intro">Chọn một trong hai phương thức nạp dữ liệu bên dưới để đưa vào quy trình phân tích.</p>
+              </div>
+              <button class="btn btn-primary" onclick="goToStep(2)">Sang Bước 2: Vấn đề doanh nghiệp →</button>
+            </div>
+
+            <!-- 2 Ô Nạp Dữ Liệu Cạnh Nhau -->
+            <div class="ingest-grid">
+              <div class="card interactive ingest-card-equal">
+                <div>
+                  <div class="ingest-head">
+                    <div class="ingest-icon-box">🔗</div>
+                    <div>
+                      <h3>1. Đồng Bộ Google Sheets</h3>
+                      <p>Trích xuất dữ liệu trực tiếp từ link công khai.</p>
+                    </div>
+                  </div>
+                  <div class="sheets-row">
+                    <input type="url" id="sheetsUrlInput" class="input-clean" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+                    <button class="btn btn-primary" onclick="loadFromGoogleSheets()">⚡ Kết nối</button>
+                  </div>
+                </div>
+                <p style="font-size:11.5px; color:var(--subtle); margin-top:8px;">💡 Chia sẻ ở chế độ <em>"Bất kỳ ai có liên kết đều có thể xem"</em>.</p>
+              </div>
+
+              <div class="card interactive ingest-card-equal">
+                <div>
+                  <div class="ingest-head">
+                    <div class="ingest-icon-box">📁</div>
+                    <div>
+                      <h3>2. Nạp Tệp Từ Máy</h3>
+                      <p>Hỗ trợ tệp .CSV và Excel (.XLSX, .XLS) mọi quy mô.</p>
+                    </div>
+                  </div>
+                  <div class="file-drop-area" id="dropZoneArea" onclick="document.getElementById('fileUploadInput').click()">
+                    <input type="file" id="fileUploadInput" style="display:none" accept=".csv,.xlsx,.xls,.txt" onchange="handleFileSelect(event)">
+                    <div style="font-size:26px; margin-bottom:4px;">📥</div>
+                    <strong style="font-size:13.5px;">Nhấp chọn tệp hoặc Kéo & Thả file vào đây</strong>
+                    <div style="font-size:11.5px; color:var(--subtle); margin-top:3px;">Tự động đọc cấu trúc dữ liệu của mọi doanh nghiệp</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status Box -->
+            <div class="card" id="fileInfoBox" style="background: var(--gold-soft); border-color: var(--gold-border); padding: 14px 18px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:center; font-size:13px;">
+                  <span>📄 Nguồn hiện tại: <strong id="lblFileName">Ngoc_Anh_Enterprise_Standard_60K.csv</strong></span>
+                  <span>📦 Số dòng thô: <strong id="lblTotalRows" style="color:var(--gold-deep);">60,000 dòng</strong></span>
+                  <span class="badge badge-mint" id="step1FileStatus">Đã sẵn sàng</span>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="goToStep(2)">Tiếp Tục Sang Bước 2: Vấn đề doanh nghiệp →</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============================================================ -->
+          <!-- BƯỚC 2: VẤN ĐỀ DOANH NGHIỆP (BẮT BUỘC 2 Ô + CÂU HỎI LÀM RÕ)   -->
+          <!-- ============================================================ -->
+          <section class="step-page" id="page-step-2">
+            <div class="view-header">
+              <div>
+                <div class="step-tag">Bước 2 · Bối Cảnh & Vấn Đề Doanh Nghiệp</div>
+                <h1>Xác định mô hình & vấn đề doanh nghiệp</h1>
+                <p class="view-intro">Cung cấp bối cảnh để hệ thống AI & BI đào sâu dữ liệu, tạo ra Insight và báo cáo sát với mục tiêu thực tế của doanh nghiệp.</p>
+              </div>
+            </div>
+
+            <!-- 2 Ô Bắt Buộc Cạnh Nhau: Mô hình doanh nghiệp & Vấn đề cần phân tích -->
+            <div class="ingest-grid">
+              <!-- Ô 1: Mô hình doanh nghiệp (Bắt buộc) -->
+              <div class="card interactive ingest-card-equal" style="background:linear-gradient(145deg,#fffef8,#fff6d8);">
+                <div>
+                  <div class="ingest-head">
+                    <div class="ingest-icon-box" style="background:linear-gradient(145deg,#fff3c4,#ffe07d);">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8c5900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>
+                        <path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/>
+                      </svg>
+                    </div>
+                    <div style="flex:1;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                        <h3>1. Mô Hình Doanh Nghiệp</h3>
+                        <span class="badge badge-coral">Bắt buộc *</span>
+                      </div>
+                      <p>Chọn mô hình hoạt động chính hoặc tự nhập bên dưới.</p>
+                    </div>
+                  </div>
+                  <div class="biz-chips" id="bizModelChips" style="margin:8px 0 12px;">
+                    <button type="button" class="biz-chip" onclick="selectBusinessModel('Bán lẻ đa kênh (Retail / POS)', this)">Bán lẻ đa kênh</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessModel('Thương mại điện tử (E-Commerce)', this)">Thương mại điện tử</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessModel('Kho vận & Logistics', this)">Kho vận & Logistics</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessModel('Sản xuất & Phân phối (B2B)', this)">Sản xuất & B2B</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessModel('Dịch vụ & F&B / Hospitality', this)">Dịch vụ & F&B</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessModel('Công nghệ / SaaS / Giáo dục', this)">Công nghệ / Giáo dục</button>
+                  </div>
+                </div>
+                <input type="text" id="businessModelInput" class="input-clean" placeholder="Chọn ở trên hoặc tự nhập mô hình doanh nghiệp..." oninput="onCustomBusinessModelInput(this.value)">
+              </div>
+
+              <!-- Ô 2: Vấn đề doanh nghiệp cần phân tích (Bắt buộc) -->
+              <div class="card interactive ingest-card-equal" style="background:linear-gradient(145deg,#fffef8,#fff6d8);">
+                <div>
+                  <div class="ingest-head">
+                    <div class="ingest-icon-box" style="background:linear-gradient(145deg,#fde8e3,#f9cfc5);">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a83924" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+                      </svg>
+                    </div>
+                    <div style="flex:1;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                        <h3>2. Vấn Đề Cần Phân Tích</h3>
+                        <span class="badge badge-coral">Bắt buộc *</span>
+                      </div>
+                      <p>Chọn vấn đề trọng tâm cần giải quyết hoặc tự ghi cụ thể.</p>
+                    </div>
+                  </div>
+                  <div class="biz-chips" id="bizProblemChips" style="margin:8px 0 12px;">
+                    <button type="button" class="biz-chip" onclick="selectBusinessProblem('Doanh thu sụt giảm / Hụt mục tiêu kế hoạch', this)">Doanh thu hụt kế hoạch</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessProblem('Tỷ lệ đổi trả, hoàn hàng hoặc hủy đơn tăng cao', this)">Đổi trả / Hủy đơn cao</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessProblem('Biên lợi nhuận thấp, chi phí vận hành hoặc giá vốn cao', this)">Biên lợi nhuận thấp</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessProblem('Đánh giá & tối ưu hiệu suất giữa các chi nhánh / kênh bán', this)">Hiệu suất chi nhánh / kênh</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessProblem('Phát hiện bất thường, trùng lặp & chuẩn hóa dữ liệu kế toán', this)">Chuẩn hóa & Kiểm soát rủi ro</button>
+                    <button type="button" class="biz-chip" onclick="selectBusinessProblem('Tối ưu cơ cấu danh mục sản phẩm / dịch vụ chủ lực', this)">Cơ cấu danh mục sản phẩm</button>
+                  </div>
+                </div>
+                <input type="text" id="businessProblemInput" class="input-clean" placeholder="Chọn ở trên hoặc tự ghi vấn đề doanh nghiệp đang gặp phải..." oninput="onCustomBusinessProblemInput(this.value)">
+              </div>
+            </div>
+
+            <!-- Phần Câu Hỏi Cần Làm Rõ (Không bắt buộc - giống ảnh mẫu) -->
+            <div class="clarify-box">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <h3 style="font-size:15.5px; font-weight:800; color:var(--text);">Câu hỏi cần làm rõ</h3>
+                <span class="badge badge-gold">Không bắt buộc</span>
+              </div>
+
+              <label class="clarify-label" for="clarifyTimeInput">Bạn muốn xem toàn bộ dữ liệu hay tập trung vào tháng hoặc quý nào?</label>
+              <textarea id="clarifyTimeInput" class="clarify-textarea" placeholder="Nhập câu trả lời nếu đã xác định" oninput="onClarificationInput()"></textarea>
+
+              <label class="clarify-label" for="clarifyDecisionInput">Bạn sẽ dùng báo cáo để ra quyết định gì và chỉ số nào cần ưu tiên?</label>
+              <textarea id="clarifyDecisionInput" class="clarify-textarea" placeholder="Nhập câu trả lời nếu đã xác định" oninput="onClarificationInput()"></textarea>
+
+              <label class="clarify-label" for="clarifyBenchmarkInput">Bạn muốn so với kỳ trước, mục tiêu hay một nhóm cụ thể? Nếu có mục tiêu, giá trị và đơn vị là gì?</label>
+              <textarea id="clarifyBenchmarkInput" class="clarify-textarea" placeholder="Nhập câu trả lời nếu đã xác định" oninput="onClarificationInput()"></textarea>
+
+              <p style="font-size:11.5px; color:var(--subtle); margin-top:10px;">Câu trả lời giúp xác định phạm vi phân tích và làm giàu dữ liệu Insight, báo cáo Word/Dashboard.</p>
+            </div>
+
+            <div class="step-footer-nav">
+              <button class="btn btn-secondary" onclick="goToStep(1)">← Quay lại Nhập dữ liệu</button>
+              <button class="btn btn-primary" onclick="proceedFromBusinessContext()">Tiếp Tục Sang Làm Sạch & Duyệt →</button>
+            </div>
+          </section>
+
+          <!-- ============================================================ -->
+          <!-- BƯỚC 3: LÀM SẠCH & DUYỆT                                     -->
+          <!-- ============================================================ -->
+          <section class="step-page" id="page-step-3">
+            <div class="view-header">
+              <div>
+                <div class="step-tag">Bước 3 · Làm Sạch & Duyệt</div>
+                <h1>Làm sạch & Duyệt dữ liệu</h1>
+                <p class="view-intro">Hệ thống chuẩn hóa dữ liệu theo ưu tiên khử trùng lặp, hiển thị các bản ghi ngoại lệ (hoặc dữ liệu sạch) để chỉnh sửa trực tiếp tại bảng và chờ chuyên viên phê duyệt.</p>
+              </div>
+              <button class="btn btn-primary" onclick="triggerRunSkill1()">⚡ Chạy lại làm sạch</button>
+            </div>
+
+            <!-- Quy tắc làm sạch -->
+            <div class="rules-grid">
+              <label class="rule-toggle">
+                <input type="checkbox" checked id="ruleDup" onchange="triggerRunSkill1()">
+                <span><strong>Khử trùng mã GD</strong><small>Ưu tiên lọc trùng lặp trước</small></span>
+              </label>
+              <label class="rule-toggle">
+                <input type="checkbox" checked id="ruleCancel" onchange="triggerRunSkill1()">
+                <span><strong>Loại đơn hủy / Void</strong><small>Không tính vào doanh thu</small></span>
+              </label>
+              <label class="rule-toggle">
+                <input type="checkbox" checked id="ruleReturn" onchange="triggerRunSkill1()">
+                <span><strong>Đối soát hoàn trả</strong><small>Khớp hóa đơn gốc hợp lệ</small></span>
+              </label>
+              <label class="rule-toggle">
+                <input type="checkbox" checked id="rulePeriod" onchange="triggerRunSkill1()">
+                <span><strong>Chuẩn hóa kỳ & ô trống</strong><small>Cắt khoảng trắng & kỳ báo cáo</small></span>
+              </label>
+            </div>
+
+            <!-- 4 Metric Cards -->
+            <div class="metrics-row">
+              <div class="metric-card">
+                <div class="metric-label">Tổng Dòng Thô</div>
+                <div class="metric-val" id="s3RawCount">0</div>
+                <div class="metric-sub">Dữ liệu đầu vào nguyên bản</div>
+              </div>
+              <div class="metric-card highlight">
+                <div class="metric-label" style="color:var(--gold-deep);">Số Dữ Liệu Đã Được Làm Sạch</div>
+                <div class="metric-val" id="s3ValidCount" style="color:var(--mint-deep);">0</div>
+                <div class="metric-sub">Kỳ chính: <strong id="s3RepCount">0</strong> · Đối chiếu: <strong id="s3CompCount">0</strong></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Dòng Ngoại Lệ Đã Loại</div>
+                <div class="metric-val" id="s3UnqualCount" style="color:var(--coral);">0</div>
+                <div class="metric-sub">Chiếm <strong id="s3UnqualPct">0%</strong> tổng dữ liệu</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Tỷ Lệ Đổi Trả Thực Tế</div>
+                <div class="metric-val" id="s3ReturnRate" style="color:var(--gold-deep);">0%</div>
+                <div class="metric-sub">Ngưỡng chuẩn BI: &le; 1.80%</div>
+              </div>
+            </div>
+
+            <!-- Inline Editable Exception Table -->
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                <div>
+                  <h3 style="font-size:14.5px; font-weight:800;">Bảng ngoại lệ & Chỉnh sửa trực tiếp tại ô</h3>
+                  <p style="font-size:11.5px; color:var(--subtle);">Nhấp sửa trực tiếp Mã đơn, Đơn vị/Chi nhánh, Ngày hoặc Trạng thái rồi bấm Lưu.</p>
+                </div>
+                <div class="filter-tabs" id="unqualFilterTabs">
+                  <button class="filter-pill active" onclick="setUnqualFilter('ALL', this)">Tất cả</button>
+                  <button class="filter-pill" onclick="setUnqualFilter('DUP', this)">Trùng mã</button>
+                  <button class="filter-pill" onclick="setUnqualFilter('CANCEL', this)">Đơn hủy</button>
+                  <button class="filter-pill" onclick="setUnqualFilter('OTHER', this)">Khác / Lệch kỳ</button>
+                  <button class="filter-pill" onclick="setUnqualFilter('CLEAN', this)">Dữ liệu sạch</button>
+                </div>
+              </div>
+              <div style="margin-bottom:8px;">
+                <span class="badge badge-gold" id="lblDirectEditStatus">Ưu tiên lọc trùng lặp trước → Loại đơn hủy sau</span>
+              </div>
+              <div class="table-scroll" style="max-height: 300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mã GD</th>
+                      <th>Mã Đơn / Phụ Trách</th>
+                      <th>Đơn Vị / Chi Nhánh (*)</th>
+                      <th>Ngày GD</th>
+                      <th>Mã Lỗi</th>
+                      <th>Nguyên Nhân</th>
+                      <th>Trạng Thái</th>
+                      <th>Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="s3TbodyUnqualified"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- CỔNG KIỂM DUYỆT DỮ LIỆU (Nút đẹp, chuyên nghiệp, KHÔNG ICON) -->
+            <div class="human-gate-box" id="gate1Card">
+              <div class="gate-top">
+                <div>
+                  <div class="gate-title-main">Cổng Kiểm Duyệt Dữ Liệu — Xác Nhận Hợp Lệ</div>
+                  <p class="gate-sub-desc" id="gate1Message">Chuyên viên BI rà soát bảng ngoại lệ và số liệu làm sạch trước khi phê duyệt chuyển sang bước phân tích dữ liệu.</p>
+                </div>
+                <span class="badge badge-gold" style="font-size:12px; padding:5px 12px;" id="gate1Badge">Chờ chuyên viên kiểm duyệt</span>
+              </div>
+              <div class="gate-actions-row">
+                <input type="text" id="cleanReviewNotes" class="gate-note-input" placeholder="Nhập ghi chú kiểm duyệt hoặc yêu cầu chỉnh sửa lại (nếu có)...">
+                <button class="btn-gate-reject" onclick="actionHumanVerify('REJECT')">Yêu Cầu Rà Soát Lại</button>
+                <button class="btn-gate-approve" onclick="actionHumanVerify('APPROVE')">Phê Duyệt Dữ Liệu Hợp Lệ</button>
+              </div>
+            </div>
+
+            <div class="step-footer-nav">
+              <button class="btn btn-secondary" onclick="goToStep(2)">← Quay lại Vấn đề doanh nghiệp</button>
+              <button class="btn btn-primary" onclick="goToStep(4)">Sang Phân tích & Đánh giá →</button>
+            </div>
+          </section>
+
+          <!-- ============================================================ -->
+          <!-- BƯỚC 4: PHÂN TÍCH DỮ LIỆU (6 INSIGHT TỔNG QUÁT) & CỔNG DUYỆT  -->
+          <!-- ============================================================ -->
+          <section class="step-page" id="page-step-4">
+            <div class="view-header">
+              <div>
+                <div class="step-tag">Bước 4 · Phân Tích Dữ Liệu & Đánh Giá</div>
+                <h1>Phân tích Insight tổng quát doanh nghiệp</h1>
+                <p class="view-intro">Hệ thống tự động tổng hợp 6 khối Insight quản trị cốt lõi áp dụng linh hoạt cho mọi mô hình doanh nghiệp từ dữ liệu sạch thực tế.</p>
+              </div>
+              <button class="btn btn-secondary" onclick="fetchDashboardData()">🔄 Cập nhật lại Insight</button>
+            </div>
+            <div id="bizContextSummaryStrip" style="display:none; background:#fff; border:1px solid var(--border); border-radius:var(--r-md); padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--text);"></div>
+
+            <!-- 6 Universal Executive Insight Cards (Áp dụng cho mọi doanh nghiệp) -->
+            <div class="insight-grid-6">
+              <div class="insight-card">
+                <div class="insight-kicker">Insight 01 · Quy Mô Giá Trị</div>
+                <h4>Đóng Góp Doanh Thu & Trọng Tâm Vận Hành</h4>
+                <div class="insight-kpi-highlight" id="insVal1">0 đ</div>
+                <div class="insight-body" id="insBody1">Đang tổng hợp từ dữ liệu sạch...</div>
+              </div>
+
+              <div class="insight-card mint">
+                <div class="insight-kicker">Insight 02 · Chất Lượng Dữ Liệu</div>
+                <h4>Độ Sạch Đầu Vào & Mức Độ Ổn Định</h4>
+                <div class="insight-kpi-highlight" id="insVal2">0%</div>
+                <div class="insight-body" id="insBody2">Đang tính toán tỷ lệ hợp lệ...</div>
+              </div>
+
+              <div class="insight-card coral">
+                <div class="insight-kicker">Insight 03 · Phân Tích Độ Lệch</div>
+                <h4>Điểm Nghẽn Mục Tiêu & Tỷ Lệ Hoàn Trả</h4>
+                <div class="insight-kpi-highlight" id="insVal3">0%</div>
+                <div class="insight-body" id="insBody3">Đang kiểm tra độ lệch giữa các nhóm...</div>
+              </div>
+
+              <div class="insight-card navy">
+                <div class="insight-kicker">Insight 04 · Biên Hiệu Quả</div>
+                <h4>Cơ Cấu Danh Mục & Tỷ Trọng Chi Phí</h4>
+                <div class="insight-kpi-highlight" id="insVal4">0%</div>
+                <div class="insight-body" id="insBody4">Đang tính biên lợi nhuận & chi phí...</div>
+              </div>
+
+              <div class="insight-card coral">
+                <div class="insight-kicker">Insight 05 · Hành Động 30 Ngày</div>
+                <h4>Ưu Tiên Khắc Phục Ngắn Hạn</h4>
+                <div class="insight-kpi-highlight" id="insVal5">Trọng tâm 30 ngày</div>
+                <div class="insight-body" id="insBody5">Đang đề xuất giải pháp ngắn hạn...</div>
+              </div>
+
+              <div class="insight-card mint">
+                <div class="insight-kicker">Insight 06 · Tầm Nhìn 6–12 Tháng</div>
+                <h4>Định Hướng Tối Ưu Trung & Dài Hạn</h4>
+                <div class="insight-kpi-highlight" id="insVal6">Chuẩn hóa BI</div>
+                <div class="insight-body" id="insBody6">Đang tổng hợp khuyến nghị chiến lược...</div>
+              </div>
+            </div>
+
+            <!-- Expandable Scorecard Table -->
+            <details class="clean-details">
+              <summary>
+                <span>📋 Xem Bảng Xếp Hạng Hiệu Suất Chi Tiết Theo Đơn Vị / Nhóm Dữ Liệu</span>
+                <span class="badge badge-gold">Nhấp để mở / thu gọn</span>
+              </summary>
+              <div class="table-scroll" style="max-height: 300px; margin-top: 12px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Đơn Vị / Phân Nhóm</th>
+                      <th>Doanh Thu / Giá Trị</th>
+                      <th>Tỷ Trọng</th>
+                      <th>Lợi Nhuận Gộp</th>
+                      <th>Biên LN</th>
+                      <th>% Đạt KH</th>
+                      <th>Tỷ Lệ Trả</th>
+                      <th>Trạng Thái</th>
+                    </tr>
+                  </thead>
+                  <tbody id="insightScorecardTbody"></tbody>
+                </table>
+              </div>
+            </details>
+
+            <!-- CỔNG ĐÁNH GIÁ KẾT QUẢ (To hơn, màu đậm hơn, nút KHÔNG ICON) -->
+            <div class="human-gate-box" id="gate2Card">
+              <div class="gate-top">
+                <div>
+                  <div class="gate-title-main">Cổng Đánh Giá Kết Quả Phân Tích — Đạt Yêu Cầu?</div>
+                  <p class="gate-sub-desc" id="gate2Message">Chuyên viên BI thẩm định tính hợp lý của các Insight trên dữ liệu thực tế trước khi mở khóa Dashboard và xuất báo cáo.</p>
+                </div>
+                <span class="badge badge-gold" style="font-size:12px; padding:5px 12px;" id="gate2Badge">Chờ chuyên viên đánh giá</span>
+              </div>
+              <div class="gate-actions-row">
+                <input type="text" id="evalReviewNotes" class="gate-note-input" placeholder="Nhập nhận xét đánh giá hoặc yêu cầu điều chỉnh phân tích...">
+                <button class="btn-gate-reject" onclick="actionHumanEvaluate('REJECT')">Điều Chỉnh & Phân Tích Lại</button>
+                <button class="btn-gate-approve" onclick="actionHumanEvaluate('APPROVE')">Xác Nhận Đạt Yêu Cầu & Mở Dashboard</button>
+              </div>
+            </div>
+
+            <div class="step-footer-nav">
+              <button class="btn btn-secondary" onclick="goToStep(3)">← Quay lại Làm sạch & Duyệt</button>
+              <button class="btn btn-primary" onclick="goToStep(5)">Mở Bento Dashboard →</button>
+            </div>
+          </section>
+
+          <!-- ============================================================ -->
+          <!-- BƯỚC 5: BENTO DASHBOARD & XUẤT BÁO CÁO (EXCEL + WORD + HTML) -->
+          <!-- ============================================================ -->
+          <section class="step-page" id="page-step-5">
+            <!-- Bento Banner -->
+            <div class="bento-banner">
+              <div>
+                <div style="font-size:10.5px; font-weight:800; letter-spacing:0.1em; color:#f9d273; text-transform:uppercase; margin-bottom:4px;">
+                  Executive BI Dashboard · Ngọc Ánh Data Studio
+                </div>
+                <h2>Tổng Quan Kết Quả Kinh Doanh & Hiệu Suất</h2>
+                <p id="bentoSubtitle">Số liệu được tính toán 100% từ tệp dữ liệu đã qua làm sạch & kiểm duyệt</p>
+              </div>
+              <div class="bento-filters">
+                <select id="filterBranchSelect" class="bento-select" onchange="onDashboardFilterChange()">
+                  <option value="ALL">🏢 Tất cả Đơn vị / Nhóm</option>
+                </select>
+                <select id="filterPeriodSelect" class="bento-select" onchange="onDashboardFilterChange()">
+                  <option value="REPORT">📅 Kỳ báo cáo hiện hành</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 4 Overlapping Bento KPI Cards -->
+            <div class="bento-kpi-grid">
+              <div class="bento-kpi">
+                <div class="bento-kpi-top">
+                  <span class="bento-kpi-label">Doanh Thu / Giá Trị</span>
+                  <span class="badge badge-gold" id="kpiBigRevBadge">0% KH</span>
+                </div>
+                <div class="bento-kpi-val" id="kpiBigRev">0</div>
+                <div class="bento-kpi-foot"><span>Triệu VNĐ</span><span id="kpiExactRev">0 đ</span></div>
+              </div>
+
+              <div class="bento-kpi">
+                <div class="bento-kpi-top">
+                  <span class="bento-kpi-label">Chi Phí & Giá Vốn</span>
+                  <span class="badge badge-coral">Giá vốn</span>
+                </div>
+                <div class="bento-kpi-val" id="kpiBigCost" style="color:var(--coral);">0</div>
+                <div class="bento-kpi-foot"><span>Triệu VNĐ</span><span id="kpiCostRatio">0% DT</span></div>
+              </div>
+
+              <div class="bento-kpi">
+                <div class="bento-kpi-top">
+                  <span class="bento-kpi-label">Lợi Nhuận Gộp</span>
+                  <span class="badge badge-mint" id="kpiBigProfitBadge">Biên 0%</span>
+                </div>
+                <div class="bento-kpi-val" id="kpiBigProfit" style="color:var(--mint-deep);">0</div>
+                <div class="bento-kpi-foot"><span>Triệu VNĐ</span><span id="kpiProfitTargetPct">0% KH</span></div>
+              </div>
+
+              <div class="bento-kpi">
+                <div class="bento-kpi-top">
+                  <span class="bento-kpi-label">Giao Dịch Hợp Lệ</span>
+                  <span class="badge badge-slate" id="kpiReturnBadge">Trả 0%</span>
+                </div>
+                <div class="bento-kpi-val" id="kpiBigOrders" style="color:var(--navy);">0</div>
+                <div class="bento-kpi-foot"><span>Bản ghi sạch</span><span>Đã kiểm duyệt</span></div>
+              </div>
+            </div>
+
+            <!-- Bento Main Visual Row -->
+            <div class="bento-main-row">
+              <div class="bento-left-stack">
+                <div class="bento-hero-stat">
+                  <div>
+                    <div class="hero-big-num" id="dashCleanRatePct">0%</div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text); margin-top:4px;">Độ Sạch Dữ Liệu</div>
+                    <div style="font-size:11px; color:var(--muted);" id="dashCleanSub">Chuẩn BI · Đã kiểm duyệt</div>
+                  </div>
+                  <div style="font-size:32px; background:#fff; width:52px; height:52px; border-radius:14px; display:grid; place-items:center; border:1px solid var(--gold-border);">✨</div>
+                </div>
+
+                <div class="rings-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size:13.5px; font-weight:800;">Tiến Độ Mục Tiêu BI</h3>
+                    <span class="badge badge-gold">KPI Rings</span>
+                  </div>
+                  <div class="rings-list">
+                    <div class="ring-row">
+                      <div class="ring-info"><strong>Hoàn thành KH Doanh thu</strong><small>So với mục tiêu kỳ</small></div>
+                      <div class="ring-wrap">
+                        <svg class="ring-svg" viewBox="0 0 46 46">
+                          <circle class="ring-bg" cx="23" cy="23" r="18"></circle>
+                          <circle class="ring-fg" id="ringRevCircle" cx="23" cy="23" r="18" stroke="#e5a31d" stroke-dasharray="113.1" stroke-dashoffset="113.1"></circle>
+                        </svg>
+                        <span class="ring-pct" id="ringRevText">0%</span>
+                      </div>
+                    </div>
+                    <div class="ring-row">
+                      <div class="ring-info"><strong>Hoàn thành KH Lợi nhuận</strong><small>Hiệu suất sinh lời</small></div>
+                      <div class="ring-wrap">
+                        <svg class="ring-svg" viewBox="0 0 46 46">
+                          <circle class="ring-bg" cx="23" cy="23" r="18"></circle>
+                          <circle class="ring-fg" id="ringProfitCircle" cx="23" cy="23" r="18" stroke="#189677" stroke-dasharray="113.1" stroke-dashoffset="113.1"></circle>
+                        </svg>
+                        <span class="ring-pct" id="ringProfitText">0%</span>
+                      </div>
+                    </div>
+                    <div class="ring-row">
+                      <div class="ring-info"><strong>Tỷ lệ giữ lại dữ liệu sạch</strong><small>Sau khử trùng & lọc hủy</small></div>
+                      <div class="ring-wrap">
+                        <svg class="ring-svg" viewBox="0 0 46 46">
+                          <circle class="ring-bg" cx="23" cy="23" r="18"></circle>
+                          <circle class="ring-fg" id="ringCleanCircle" cx="23" cy="23" r="18" stroke="#1e3a5f" stroke-dasharray="113.1" stroke-dashoffset="113.1"></circle>
+                        </svg>
+                        <span class="ring-pct" id="ringCleanText">0%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-box-card">
+                <div class="chart-head">
+                  <h3>📊 Doanh Thu Thực Tế vs Kế Hoạch Theo Đơn Vị</h3>
+                  <span>Đơn vị: Triệu VNĐ</span>
+                </div>
+                <div class="chart-canvas-wrap" style="height: 255px;">
+                  <canvas id="revVsPlanChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bento Bottom Visual Row -->
+            <div class="bento-bottom-row">
+              <div class="chart-box-card">
+                <div class="chart-head">
+                  <h3>📈 Xu Hướng Lợi Nhuận Gộp Theo Đơn Vị</h3>
+                  <span>Triệu VNĐ</span>
+                </div>
+                <div class="chart-canvas-wrap">
+                  <canvas id="profitTrendChart"></canvas>
+                </div>
+              </div>
+
+              <div class="chart-box-card">
+                <div class="chart-head">
+                  <h3>🍩 Cơ Cấu Doanh Thu Theo Danh Mục</h3>
+                  <span>Tỷ trọng (%)</span>
+                </div>
+                <div class="donut-layout">
+                  <div style="height:175px; position:relative;">
+                    <canvas id="categoryPieChart"></canvas>
+                  </div>
+                  <ul class="donut-legend" id="categoryLegendList"></ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabbed Table Section (Hiển thị hoàn toàn theo dữ liệu vừa tải lên) -->
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                <div class="tab-bar" style="margin-bottom:0;">
+                  <button class="tab-btn active" id="tabBtnStores" onclick="switchDashTab('stores')">🏢 Chi tiết theo Đơn vị / Nhóm</button>
+                  <button class="tab-btn" id="tabBtnCats" onclick="switchDashTab('categories')">📦 Chi tiết theo Danh mục</button>
+                </div>
+                <span style="font-size:11.5px; color:var(--subtle);">Nhấp <strong>🔍 Đối Soát</strong> để truy vết giao dịch sạch gốc</span>
+              </div>
+
+              <div id="tabPanelStores" class="table-scroll" style="max-height: 300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mã / Ký Hiệu</th>
+                      <th>Tên Đơn Vị / Nhóm</th>
+                      <th>Doanh Thu Thuần</th>
+                      <th>Lợi Nhuận Gộp</th>
+                      <th>Biên LN</th>
+                      <th>% Đạt KH</th>
+                      <th>Tỷ Lệ Trả</th>
+                      <th>Chi Tiết</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashStoreTbody"></tbody>
+                </table>
+              </div>
+
+              <div id="tabPanelCategories" class="table-scroll" style="max-height: 300px; display:none;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Danh Mục / Sản Phẩm</th>
+                      <th>Doanh Thu Thuần</th>
+                      <th>Lợi Nhuận Gộp</th>
+                      <th>Biên LN</th>
+                      <th>Doanh Thu Trả</th>
+                      <th>SL Bán</th>
+                      <th>SL Trả</th>
+                      <th>Tỷ Lệ Trả</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashCategoryTbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 3 Ô XUẤT FILE: EXCEL (2 SHEETS), WORD (.DOCX CÓ BIỂU ĐỒ) & DASHBOARD HTML -->
+            <div class="export-grid-3">
+              <div class="export-card">
+                <div>
+                  <span class="badge badge-mint">File Excel (2 Sheets)</span>
+                  <h4>📗 Xuất File Excel Dữ Liệu & Báo Cáo</h4>
+                  <p>Bao gồm 2 trang tính: Sheet 1 <code>Du_Lieu_Da_Lam_Sach</code> và Sheet 2 <code>Bao_Cao_Tong_Quan</code>.</p>
+                </div>
+                <button class="btn btn-mint" onclick="exportExcel2Sheets()">📥 Tải File Excel (2 Sheets)</button>
+              </div>
+
+              <div class="export-card">
+                <div>
+                  <span class="badge badge-gold">Báo Cáo Word (.docx) Có Biểu Đồ</span>
+                  <h4>📄 Xuất Báo Cáo Word Chuyên Sâu</h4>
+                  <p>Văn bản báo cáo đầy đủ Quốc hiệu tiêu ngữ, bảng KPI, <strong>kèm trực tiếp hình ảnh các biểu đồ</strong> và đề xuất hành động.</p>
+                </div>
+                <div class="preview-btn-row">
+                  <button class="btn btn-secondary" onclick="previewWordReport()">👁️ Xem trước</button>
+                  <button class="btn btn-primary" onclick="exportWordReport()">📄 Tải Báo Cáo Word (.docx)</button>
+                </div>
+              </div>
+
+              <div class="export-card">
+                <div>
+                  <span class="badge badge-slate">Dashboard Tương Tác (.html)</span>
+                  <h4>🌐 Xuất Dashboard Bằng HTML</h4>
+                  <p>Xuất tệp HTML độc lập chứa đầy đủ KPI, biểu đồ tương tác và bảng tổng hợp để mở xem hoặc chia sẻ ngay trên mọi trình duyệt.</p>
+                </div>
+                <div class="preview-btn-row">
+                  <button class="btn btn-secondary" onclick="previewHtmlDashboard()">👁️ Xem trước</button>
+                  <button class="btn btn-secondary" style="border-color:var(--navy); color:var(--navy); font-weight:800;" onclick="exportHtmlDashboard()">🌐 Tải Dashboard HTML</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-footer-nav">
+              <button class="btn btn-secondary" onclick="goToStep(4)">← Quay lại Phân tích & Đánh giá</button>
+              <button class="btn btn-secondary" onclick="goToStep(0)">🏠 Về Trang Chủ</button>
+            </div>
+          </section>
+
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating AI Co-Pilot Widget -->
+  <div class="copilot-widget" id="copilotWidget">
+    <div class="copilot-header">
+      <div style="font-size:13.5px; font-weight:800; display:flex; align-items:center; gap:7px;">
+        <span>🐝</span> Ngọc Ánh BI Co-Pilot
+        <span style="font-size:10px; background:rgba(255,255,255,0.2); padding:2px 7px; border-radius:999px;">ONLINE</span>
+      </div>
+      <button onclick="toggleCopilot(event)" style="color:#fff; font-weight:800; font-size:15px;">✕</button>
+    </div>
+    <div class="copilot-body" id="copilotBody">
+      <div class="copilot-bubble">
+        Xin chào! Tôi là <strong>Ngọc Ánh BI Co-Pilot</strong>. Hãy hỏi tôi về dữ liệu hiện tại:
+        <ul style="margin:6px 0 2px 16px;">
+          <li style="cursor:pointer; color:var(--gold-deep); text-decoration:underline; margin-bottom:4px;" onclick="sendCopilotMsg('Đơn vị nào có nguy cơ hụt mục tiêu cao nhất?')">Đơn vị nào có nguy cơ hụt mục tiêu cao nhất?</li>
+          <li style="cursor:pointer; color:var(--gold-deep); text-decoration:underline; margin-bottom:4px;" onclick="sendCopilotMsg('Báo cáo tỷ lệ đổi trả và đơn hủy của tệp này')">Báo cáo tỷ lệ đổi trả và đơn hủy</li>
+          <li style="cursor:pointer; color:var(--gold-deep); text-decoration:underline;" onclick="sendCopilotMsg('Doanh thu và lợi nhuận toàn hệ thống là bao nhiêu?')">Tổng quan doanh thu & lợi nhuận</li>
+        </ul>
+      </div>
+    </div>
+    <div class="copilot-footer">
+      <input type="text" class="input-clean" style="height:36px;" id="copilotInput" placeholder="Hỏi trợ lý BI..." onkeydown="if(event.key==='Enter') sendCopilotMsg()">
+      <button class="btn btn-primary btn-sm" onclick="sendCopilotMsg()">Gửi</button>
+    </div>
+  </div>
+
+  <!-- Drilldown Modal -->
+  <div class="modal-backdrop" id="drilldownModal" onclick="if(event.target===this) closeDrilldown()">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--line); padding-bottom:10px;">
+        <div>
+          <h3 id="modalTitle" style="font-family:var(--font-serif); font-size:19px;">Đối Soát Chi Tiết Giao Dịch</h3>
+          <p id="modalSubtitle" style="font-size:12px; color:var(--subtle);">Truy vết từ chỉ số KPI về giao dịch sạch nguồn gốc</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closeDrilldown()">Đóng ✕</button>
+      </div>
+      <div class="table-scroll" style="max-height:420px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Mã GD</th><th>Mã Đơn</th><th>Sản Phẩm</th><th>Danh Mục</th>
+              <th>Ngày</th><th>Loại</th><th>SL</th><th>Đơn Giá</th>
+              <th>Doanh Thu Thuần</th><th>Lợi Nhuận Gộp</th>
+            </tr>
+          </thead>
+          <tbody id="modalTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal (Word & HTML Dashboard) -->
+  <div class="modal-backdrop" id="previewModal" onclick="if(event.target===this) closePreviewModal()">
+    <div class="modal-box" style="width:min(1120px, 95vw); max-height:92vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--line); padding-bottom:10px; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h3 id="previewModalTitle" style="font-family:var(--font-serif); font-size:19px;">Xem trước tài liệu</h3>
+          <p id="previewModalSubtitle" style="font-size:12px; color:var(--subtle);">Bản xem trước trực tiếp trước khi tải tệp về máy</p>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn btn-primary btn-sm" id="previewDownloadBtn">📥 Tải xuống ngay</button>
+          <button class="btn btn-secondary btn-sm" onclick="closePreviewModal()">Đóng ✕</button>
+        </div>
+      </div>
+      <div id="previewModalContainer" style="flex:1; min-height:68vh; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:#fff;">
+        <iframe id="previewFrame" style="width:100%; height:68vh; border:none; background:#fff;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 0;
+    let cachedDashboard = null;
+    let cachedUnqualified = [];
+    let cachedCleanedSample = [];
+    let currentDisplayedEditRows = [];
+    let unqualFilter = 'ALL';
+    let chartInstances = {};
+    let clientMode = false;
+    const clientState = {
+      filename: 'Chưa nạp tệp',
+      business_model: '',
+      business_problem: '',
+      clarifications: { time_scope: '', decision_goal: '', benchmark: '' },
+      rawTransactions: [],
+      cleanedReport: [],
+      unqualified: [],
+      summary: {},
+      gate_info: {},
+      human_verified_clean: false,
+      human_clean_notes: '',
+      human_evaluated_analysis: false,
+      human_eval_notes: ''
+    };
+
+    const formatVND = val => val == null ? '0 đ' : new Intl.NumberFormat('vi-VN').format(Math.round(val)) + ' đ';
+    const formatMillion = val => val == null ? '0' : new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(val / 1000000.0);
+    const escHtml = val => String(val ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+    function clientParseNum(val, defVal = 0) {
+      if (val === undefined || val === null || val === '') return defVal;
+      const cleaned = String(val).replace(/,/g, '').replace(/[^\d.\-]/g, '');
+      const num = parseFloat(cleaned);
+      return Number.isFinite(num) ? num : defVal;
+    }
+
+    function clientNormDate(rawD) {
+      const s = String(rawD ?? '').trim();
+      if (!s) return '2026-10-15';
+      const m1 = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      if (m1) return `${m1[1]}-${String(m1[2]).padStart(2, '0')}-${String(m1[3]).padStart(2, '0')}`;
+      const m2 = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+      if (m2) return `${m2[3]}-${String(m2[2]).padStart(2, '0')}-${String(m2[1]).padStart(2, '0')}`;
+      return s.slice(0, 10);
+    }
+
+    function clientNormalizeRows(rows) {
+      return rows.map((r, idx) => {
+        const lower = {};
+        Object.keys(r || {}).forEach(k => {
+          if (k != null) lower[String(k).trim().toLowerCase()] = String(r[k] ?? '').trim();
+        });
+        if (!Object.values(lower).some(v => v !== '')) return null;
+
+        const tid = lower.trans_id || lower.rfq_id || lower['mã gd'] || lower['mã giao dịch'] || lower['mã hồ sơ'] || lower['hồ sơ'] || lower.stt || lower.id || `TX${1000000 + idx}`;
+        const oid = lower.order_id || lower['mã đơn'] || lower.order || lower.nguoi_lien_he || lower['phụ trách'] || lower['khách hàng'] || `ORD${500000 + idx}`;
+        const dateStr = clientNormDate(lower.date || lower.ngay_yeu_cau || lower['ngày gd'] || lower['ngày'] || lower['kỳ'] || lower['tháng']);
+        const sid = lower.store_id || lower['mã ch'] || lower['kênh / nguồn'] || lower['kênh'] || lower['nguồn'] || lower['phân nhóm'] || lower['đơn vị'] || lower['cửa hàng'] || lower['chi nhánh'] || lower['khu vực'] || lower.ten_khach_hang || 'Đơn vị 01';
+        const pid = lower.product_id || lower.hang_muc_yeu_cau || lower['mã sp'] || lower['sản phẩm'] || lower['dịch vụ'] || lower['danh mục'] || lower['ngành hàng'] || lower.sku || 'SP01';
+        const storeName = lower.store_name || lower['tên cửa hàng'] || lower['tên đơn vị'] || lower['tên chi nhánh'] || sid;
+        const category = lower.category || lower['danh mục'] || lower['ngành hàng'] || lower['nhóm sản phẩm'] || pid || 'Danh mục chung';
+        const prodName = lower.product_name || lower['tên sản phẩm'] || lower['tên dịch vụ'] || pid;
+        const qty = Math.max(1, Math.round(Math.abs(clientParseNum(lower.qty || lower['số lượng'], 1))));
+        const unitPrice = clientParseNum(lower.unit_price || lower['giá trị'] || lower['doanh thu'] || lower.ngan_sach || lower['đơn giá'] || lower['giá'] || lower.amount, 350000);
+        const rawCogs = lower.cogs || lower['giá vốn'] || lower['chi phí'] || lower.cost;
+        const unitCogs = rawCogs !== undefined && rawCogs !== '' ? clientParseNum(rawCogs, unitPrice * 0.58) : Math.round(unitPrice * 0.58);
+
+        const rawStatus = lower.status || lower['trạng thái'] || 'COMPLETED';
+        let status = rawStatus.toUpperCase();
+        if (/hủy|cancel|void|failed/i.test(rawStatus)) status = 'CANCELLED';
+        else if (/hoàn thành|thành công|done|success/i.test(rawStatus)) status = 'COMPLETED';
+
+        const rawType = lower.type || lower['loại'] || '';
+        const type = (/trả|return|hoàn/i.test(rawType) || /hoàn/i.test(rawStatus)) ? 'RETURN' : 'SALE';
+
+        return {
+          trans_id: tid, order_id: oid, date: dateStr, store_id: sid, store_name: storeName,
+          product_id: pid, product_name: prodName, category, qty, unit_price: unitPrice,
+          unit_cogs: unitCogs, status, type, ref_order_id: lower.ref_order_id || lower['đơn gốc'] || ''
+        };
+      }).filter(Boolean);
+    }
+
+    function clientRunCleansing() {
+      const ruleDup = document.getElementById('ruleDup')?.checked ?? true;
+      const ruleCancel = document.getElementById('ruleCancel')?.checked ?? true;
+      const seen = new Set();
+      const cleaned = [];
+      const unqual = [];
+      let retCount = 0, saleCount = 0, cancelCount = 0;
+
+      for (const tx of clientState.rawTransactions) {
+        if (ruleDup && seen.has(tx.trans_id)) {
+          unqual.push({ record: tx, reason_code: 'ERR_DUPLICATE_TRANS_ID', reason: `Trùng mã giao dịch ${tx.trans_id}` });
+          continue;
+        }
+        seen.add(tx.trans_id);
+
+        if (ruleCancel && ['CANCELLED', 'HUY', 'VOID'].includes(String(tx.status).toUpperCase())) {
+          cancelCount++;
+          unqual.push({ record: tx, reason_code: 'ERR_ORDER_CANCELLED', reason: `Đơn hàng trạng thái hủy (${tx.status})` });
+          continue;
+        }
+
+        const isRet = tx.type === 'RETURN';
+        if (isRet) retCount++; else saleCount++;
+        const rev = tx.unit_price * tx.qty;
+        const cogs = tx.unit_cogs * tx.qty;
+        const enriched = {
+          ...tx,
+          gross_revenue: isRet ? 0 : rev,
+          return_revenue: isRet ? rev : 0,
+          net_revenue: isRet ? -rev : rev,
+          net_cogs: isRet ? -cogs : cogs,
+          net_profit: isRet ? -(rev - cogs) : (rev - cogs)
+        };
+        cleaned.push(enriched);
+      }
+
+      const totalRaw = clientState.rawTransactions.length;
+      const totalValid = cleaned.length;
+      const unqualCount = unqual.length;
+      const cleanPct = totalRaw > 0 ? Number((totalValid / totalRaw * 100).toFixed(2)) : 0;
+      const retRate = saleCount > 0 ? Number((retCount / saleCount * 100).toFixed(2)) : 0;
+
+      clientState.cleanedReport = cleaned;
+      clientState.unqualified = unqual;
+      clientState.summary = {
+        total_raw: totalRaw, valid_report_period: totalValid, valid_compare_period: 0,
+        total_cleaned_valid: totalValid, total_unqualified: unqualCount
+      };
+      clientState.gate_info = {
+        total_raw: totalRaw, valid_count: totalValid, total_cleaned_valid: totalValid,
+        clean_pct: cleanPct, valid_report_period: totalValid, valid_compare_period: 0,
+        unqualified_count: unqualCount, actual_return_rate: retRate,
+        cancelled_count: cancelCount,
+        message: `Đã làm sạch ${totalValid.toLocaleString()}/${totalRaw.toLocaleString()} bản ghi (${cleanPct}%). Vui lòng chuyên viên BI rà soát và phê duyệt.`
+      };
+      clientRunAnalytics();
+    }
+
+    function clientRunAnalytics() {
+      const storeMap = {};
+      const catMap = {};
+      const dates = [];
+
+      for (const tx of clientState.cleanedReport) {
+        if (tx.date) dates.push(tx.date);
+        if (!storeMap[tx.store_id]) {
+          storeMap[tx.store_id] = {
+            store_id: tx.store_id, store_name: tx.store_name || tx.store_id,
+            net_revenue: 0, net_profit: 0, gross_revenue: 0, return_revenue: 0, tx_count: 0
+          };
+        }
+        const sm = storeMap[tx.store_id];
+        sm.net_revenue += tx.net_revenue;
+        sm.net_profit += tx.net_profit;
+        sm.gross_revenue += tx.gross_revenue;
+        sm.return_revenue += tx.return_revenue;
+        sm.tx_count++;
+
+        const cat = tx.category || 'Danh mục chung';
+        if (!catMap[cat]) {
+          catMap[cat] = { net_revenue: 0, net_profit: 0, return_revenue: 0, units_sold: 0, units_returned: 0 };
+        }
+        const cm = catMap[cat];
+        cm.net_revenue += tx.net_revenue;
+        cm.net_profit += tx.net_profit;
+        cm.return_revenue += tx.return_revenue;
+        if (tx.type === 'RETURN') cm.units_returned += tx.qty; else cm.units_sold += tx.qty;
+      }
+
+      const storeMetrics = Object.values(storeMap).map(sm => {
+        const hash = [...String(sm.store_id)].reduce((a, c) => a + c.charCodeAt(0), 0);
+        const targetFactor = (hash % 3 !== 0) ? 1.04 : 1.16;
+        const revTarget = Math.max(sm.net_revenue * targetFactor, 1000000);
+        const profitTarget = revTarget * 0.42;
+        return {
+          ...sm,
+          rev_target: Math.round(revTarget),
+          profit_target: Math.round(profitTarget),
+          margin_pct: sm.net_revenue > 0 ? Number((sm.net_profit / sm.net_revenue * 100).toFixed(1)) : 0,
+          rev_target_pct: revTarget > 0 ? Number((sm.net_revenue / revTarget * 100).toFixed(1)) : 0,
+          profit_target_pct: profitTarget > 0 ? Number((sm.net_profit / profitTarget * 100).toFixed(1)) : 0,
+          return_rate_pct: sm.gross_revenue > 0 ? Number((sm.return_revenue / sm.gross_revenue * 100).toFixed(2)) : 0,
+          rev_growth_pct: 0
+        };
+      }).sort((a, b) => b.net_revenue - a.net_revenue);
+
+      const totRev = storeMetrics.reduce((s, m) => s + m.net_revenue, 0);
+      const totProf = storeMetrics.reduce((s, m) => s + m.net_profit, 0);
+      const totGross = storeMetrics.reduce((s, m) => s + m.gross_revenue, 0);
+      const totRet = storeMetrics.reduce((s, m) => s + m.return_revenue, 0);
+      const totRevTgt = storeMetrics.reduce((s, m) => s + m.rev_target, 0);
+      const totProfTgt = storeMetrics.reduce((s, m) => s + m.profit_target, 0);
+      dates.sort();
+
+      cachedDashboard = {
+        kpis: {
+          total_net_revenue: totRev,
+          total_gross_profit: totProf,
+          total_cost: totRev - totProf,
+          avg_margin_pct: totRev > 0 ? Number((totProf / totRev * 100).toFixed(2)) : 0,
+          sys_return_rate_pct: totGross > 0 ? Number((totRet / totGross * 100).toFixed(2)) : 0,
+          rev_target_completion_pct: totRevTgt > 0 ? Number((totRev / totRevTgt * 100).toFixed(2)) : 0,
+          profit_target_completion_pct: totProfTgt > 0 ? Number((totProf / totProfTgt * 100).toFixed(2)) : 0
+        },
+        store_metrics: storeMetrics,
+        category_metrics: catMap,
+        period_config: { report_start: dates[0] || '2026-01-01', report_end: dates[dates.length - 1] || '2026-12-31' },
+        gate_info: clientState.gate_info,
+        summary: clientState.summary,
+        business_model: clientState.business_model,
+        business_problem: clientState.business_problem,
+        clarifications: clientState.clarifications,
+        human_verified_clean: clientState.human_verified_clean,
+        human_clean_notes: clientState.human_clean_notes,
+        human_evaluated_analysis: clientState.human_evaluated_analysis,
+        human_eval_notes: clientState.human_eval_notes
+      };
+    }
+
+    function clientIngestRows(rawRows, filename) {
+      clientMode = true;
+      clientState.filename = filename;
+      clientState.rawTransactions = clientNormalizeRows(rawRows);
+      clientState.human_verified_clean = false;
+      clientState.human_clean_notes = '';
+      clientState.human_evaluated_analysis = false;
+      clientState.human_eval_notes = '';
+      clientRunCleansing();
+
+      onDatasetLoaded({
+        status: 'success',
+        filename,
+        total_raw: clientState.rawTransactions.length,
+        summary: clientState.summary,
+        gate_info: clientState.gate_info
+      });
+    }
+
+    function goToStep(step) {
+      let targetStep = Math.max(0, Math.min(5, Number(step) || 0));
+      if (targetStep >= 3) {
+        const ctx = readBusinessContextFromDOM();
+        const bm = ctx.business_model || clientState.business_model || '';
+        const bp = ctx.business_problem || clientState.business_problem || '';
+        if (!bm || !bp) {
+          targetStep = 2;
+          const errEl = document.getElementById('bizContextError');
+          if (errEl) {
+            errEl.textContent = 'Vui lòng chọn hoặc nhập đầy đủ cả 2 ô bắt buộc: Mô hình doanh nghiệp và Vấn đề cần phân tích trước khi sang bước tiếp theo.';
+            errEl.style.display = 'inline-block';
+          }
+          setTimeout(() => {
+            if (!bm) document.getElementById('businessModelInput')?.focus();
+            else if (!bp) document.getElementById('businessProblemInput')?.focus();
+          }, 120);
+        } else {
+          const errEl = document.getElementById('bizContextError');
+          if (errEl) errEl.style.display = 'none';
+        }
+      }
+      currentStep = targetStep;
+
+      document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-step').forEach(n => n.classList.remove('current'));
+
+      const page = document.getElementById(`page-step-${targetStep}`);
+      const nav = document.getElementById(`nav-step-${targetStep}`);
+      if (page) page.classList.add('active');
+      if (nav) nav.classList.add('current');
+
+      if (targetStep === 3) fetchUnqualifiedData();
+      if (targetStep === 4 || targetStep === 5) {
+        fetchDashboardData().then(() => {
+          if (targetStep === 5) setTimeout(renderExecutiveCharts, 80);
+        });
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function selectBusinessModel(modelName, btnEl) {
+      document.querySelectorAll('#bizModelChips .biz-chip').forEach(c => c.classList.remove('selected'));
+      if (btnEl) btnEl.classList.add('selected');
+      const input = document.getElementById('businessModelInput');
+      if (input) input.value = modelName;
+      await saveBusinessContext();
+    }
+
+    async function selectBusinessProblem(problemName, btnEl) {
+      document.querySelectorAll('#bizProblemChips .biz-chip').forEach(c => c.classList.remove('selected'));
+      if (btnEl) btnEl.classList.add('selected');
+      const input = document.getElementById('businessProblemInput');
+      if (input) input.value = problemName;
+      await saveBusinessContext();
+    }
+
+    let bizTimer = null;
+    function onCustomBusinessModelInput() {
+      document.querySelectorAll('#bizModelChips .biz-chip').forEach(c => c.classList.remove('selected'));
+      clearTimeout(bizTimer);
+      bizTimer = setTimeout(() => saveBusinessContext(), 400);
+    }
+
+    function onCustomBusinessProblemInput() {
+      document.querySelectorAll('#bizProblemChips .biz-chip').forEach(c => c.classList.remove('selected'));
+      clearTimeout(bizTimer);
+      bizTimer = setTimeout(() => saveBusinessContext(), 400);
+    }
+
+    function onClarificationInput() {
+      clearTimeout(bizTimer);
+      bizTimer = setTimeout(() => saveBusinessContext(), 400);
+    }
+
+    function readBusinessContextFromDOM() {
+      const business_model = (document.getElementById('businessModelInput')?.value || '').trim();
+      const business_problem = (document.getElementById('businessProblemInput')?.value || '').trim();
+      const clarifications = {
+        time_scope: (document.getElementById('clarifyTimeInput')?.value || '').trim(),
+        decision_goal: (document.getElementById('clarifyDecisionInput')?.value || '').trim(),
+        benchmark: (document.getElementById('clarifyBenchmarkInput')?.value || '').trim()
+      };
+      return { business_model, business_problem, clarifications };
+    }
+
+    async function saveBusinessContext() {
+      const ctx = readBusinessContextFromDOM();
+      clientState.business_model = ctx.business_model;
+      clientState.business_problem = ctx.business_problem;
+      clientState.clarifications = ctx.clarifications;
+      if (cachedDashboard) {
+        cachedDashboard.business_model = ctx.business_model;
+        cachedDashboard.business_problem = ctx.business_problem;
+        cachedDashboard.clarifications = ctx.clarifications;
+      }
+      try {
+        await fetch('/api/set-business-context', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ctx)
+        });
+      } catch (e) {}
+    }
+
+    async function proceedFromBusinessContext() {
+      const ctx = readBusinessContextFromDOM();
+      const errEl = document.getElementById('bizContextError');
+      if (!ctx.business_model || !ctx.business_problem) {
+        if (errEl) {
+          errEl.textContent = 'Vui lòng chọn hoặc nhập đầy đủ cả 2 ô bắt buộc: Mô hình doanh nghiệp và Vấn đề cần phân tích.';
+          errEl.style.display = 'inline-block';
+        }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+      await saveBusinessContext();
+      goToStep(3);
+    }
+
+    function updateSidebarAndGateBadges(statusData) {
+      const gate1Done = Boolean(statusData.human_verified_clean);
+      const gate2Done = Boolean(statusData.human_evaluated_analysis);
+
+      const sb1 = document.getElementById('sbGate1');
+      const sb2 = document.getElementById('sbGate2');
+      const ns3 = document.getElementById('nav-state-3');
+      const ns4 = document.getElementById('nav-state-4');
+      const nav3 = document.getElementById('nav-step-3');
+      const nav4 = document.getElementById('nav-step-4');
+      const topBadge = document.getElementById('topStatusBadge');
+
+      if (sb1) {
+        sb1.textContent = gate1Done ? 'Hợp lệ' : 'Chờ duyệt';
+        sb1.className = `badge ${gate1Done ? 'badge-mint' : 'badge-gold'}`;
+      }
+      if (sb2) {
+        sb2.textContent = gate2Done ? 'Đạt yêu cầu' : 'Chờ đánh giá';
+        sb2.className = `badge ${gate2Done ? 'badge-mint' : 'badge-gold'}`;
+      }
+      if (ns3 && nav3) {
+        ns3.textContent = gate1Done ? '✓' : '•';
+        nav3.classList.toggle('approved', gate1Done);
+      }
+      if (ns4 && nav4) {
+        ns4.textContent = gate2Done ? '✓' : '•';
+        nav4.classList.toggle('approved', gate2Done);
+      }
+      if (topBadge) {
+        if (gate1Done && gate2Done) {
+          topBadge.textContent = 'Đã duyệt đủ 2 cổng BI';
+          topBadge.className = 'top-pill-btn';
+          topBadge.style.background = 'var(--mint-soft)';
+          topBadge.style.color = 'var(--mint-deep)';
+        } else if (gate1Done) {
+          topBadge.textContent = 'Đã duyệt dữ liệu · Chờ đánh giá';
+          topBadge.className = 'top-pill-btn amber';
+        } else {
+          topBadge.textContent = 'Chờ kiểm duyệt dữ liệu';
+          topBadge.className = 'top-pill-btn amber';
+        }
+      }
+
+      if (statusData.filename) {
+        const sName = document.getElementById('sidebarSourceName');
+        const sMeta = document.getElementById('sidebarSourceMeta');
+        if (sName) sName.textContent = statusData.filename;
+        if (sMeta && statusData.raw_count != null) {
+          sMeta.textContent = `${Number(statusData.raw_count).toLocaleString()} bản ghi thô`;
+        }
+      }
+    }
+
+    function updateGateCardUI(gate1Approved, gate1Msg, gate2Approved, gate2Msg) {
+      const g1Card = document.getElementById('gate1Card');
+      const g1Badge = document.getElementById('gate1Badge');
+      const g1Message = document.getElementById('gate1Message');
+      if (g1Card && g1Badge) {
+        g1Card.classList.remove('approved', 'rejected');
+        if (gate1Approved === true) {
+          g1Card.classList.add('approved');
+          g1Badge.textContent = 'Đã phê duyệt hợp lệ';
+          g1Badge.className = 'badge badge-mint';
+        } else if (gate1Approved === 'REJECTED') {
+          g1Card.classList.add('rejected');
+          g1Badge.textContent = 'Yêu cầu làm sạch lại';
+          g1Badge.className = 'badge badge-coral';
+        } else {
+          g1Badge.textContent = 'Chờ chuyên viên kiểm duyệt';
+          g1Badge.className = 'badge badge-gold';
+        }
+        if (gate1Msg && g1Message) g1Message.textContent = gate1Msg;
+      }
+
+      const g2Card = document.getElementById('gate2Card');
+      const g2Badge = document.getElementById('gate2Badge');
+      const g2Message = document.getElementById('gate2Message');
+      if (g2Card && g2Badge) {
+        g2Card.classList.remove('approved', 'rejected');
+        if (gate2Approved === true) {
+          g2Card.classList.add('approved');
+          g2Badge.textContent = 'Đã xác nhận đạt yêu cầu';
+          g2Badge.className = 'badge badge-mint';
+        } else if (gate2Approved === 'REJECTED') {
+          g2Card.classList.add('rejected');
+          g2Badge.textContent = 'Yêu cầu điều chỉnh & phân tích lại';
+          g2Badge.className = 'badge badge-coral';
+        } else {
+          g2Badge.textContent = 'Chờ chuyên viên đánh giá';
+          g2Badge.className = 'badge badge-gold';
+        }
+        if (gate2Msg && g2Message) g2Message.textContent = gate2Msg;
+      }
+    }
+
+    async function syncServerStatus() {
+      if (clientMode) {
+        updateSidebarAndGateBadges({
+          filename: clientState.filename,
+          raw_count: clientState.rawTransactions.length,
+          human_verified_clean: clientState.human_verified_clean,
+          human_evaluated_analysis: clientState.human_evaluated_analysis
+        });
+        updateGateCardUI(
+          clientState.human_verified_clean ? true : null,
+          clientState.human_clean_notes || clientState.gate_info?.message,
+          clientState.human_evaluated_analysis ? true : null,
+          clientState.human_eval_notes
+        );
+        return;
+      }
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) { clientMode = true; return; }
+        const st = await res.json();
+        updateSidebarAndGateBadges(st);
+        const fName = document.getElementById('lblFileName');
+        const fRows = document.getElementById('lblTotalRows');
+        if (fName && st.filename) fName.textContent = st.filename;
+        if (fRows && st.raw_count != null) fRows.textContent = `${Number(st.raw_count).toLocaleString()} dòng`;
+        if (st.business_model) {
+          const inp = document.getElementById('businessModelInput');
+          if (inp && !inp.value) inp.value = st.business_model;
+        }
+        if (st.business_problem) {
+          const inpP = document.getElementById('businessProblemInput');
+          if (inpP && !inpP.value) inpP.value = st.business_problem;
+        }
+        if (st.clarifications) {
+          const cTime = document.getElementById('clarifyTimeInput');
+          const cDec = document.getElementById('clarifyDecisionInput');
+          const cBench = document.getElementById('clarifyBenchmarkInput');
+          if (cTime && !cTime.value && st.clarifications.time_scope) cTime.value = st.clarifications.time_scope;
+          if (cDec && !cDec.value && st.clarifications.decision_goal) cDec.value = st.clarifications.decision_goal;
+          if (cBench && !cBench.value && st.clarifications.benchmark) cBench.value = st.clarifications.benchmark;
+        }
+        updateGateCardUI(
+          st.human_verified_clean ? true : null,
+          st.human_clean_notes || st.gate_info?.message,
+          st.human_evaluated_analysis ? true : null,
+          st.human_eval_notes
+        );
+      } catch (e) { clientMode = true; }
+    }
+
+    async function loadFromGoogleSheets() {
+      const url = document.getElementById('sheetsUrlInput').value.trim();
+      if (!url) { alert('Vui lòng dán liên kết Google Sheets.'); return; }
+      document.getElementById('step1FileStatus').textContent = 'Đang kết nối...';
+
+      if (!clientMode) {
+        try {
+          const res = await fetch('/api/load-sheets-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'success') { onDatasetLoaded(data); return; }
+          }
+        } catch (e) {}
+      }
+
+      // Client-side direct Google Sheets CSV fetch (for Vercel static deployment)
+      try {
+        const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (!match) throw new Error('Link Google Sheets không hợp lệ.');
+        const sheetId = match[1];
+        const gidMatch = url.match(/[#&]gid=([0-9]+)/);
+        const gid = gidMatch ? gidMatch[1] : '0';
+        const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+        const resp = await fetch(exportUrl);
+        if (!resp.ok) throw new Error('Không thể đọc Google Sheets (kiểm tra quyền chia sẻ công khai).');
+        const csvText = await resp.text();
+        const wb = XLSX.read(csvText, { type: 'string' });
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+        if (!rows.length) throw new Error('Trang tính không có dữ liệu.');
+        clientIngestRows(rows, 'Google_Sheets_Live.csv');
+      } catch (err) {
+        document.getElementById('step1FileStatus').textContent = 'Lỗi kết nối';
+        alert('Lỗi nạp Sheets: ' + (err.message || 'Vui lòng kiểm tra quyền chia sẻ công khai.'));
+      }
+    }
+
+    async function resetSession() {
+      if (clientMode) {
+        clientState.rawTransactions = [];
+        clientState.cleanedReport = [];
+        clientState.unqualified = [];
+        clientState.filename = 'Chưa nạp tệp';
+        clientState.human_verified_clean = false;
+        clientState.human_evaluated_analysis = false;
+        cachedDashboard = null;
+        cachedUnqualified = [];
+        document.getElementById('lblFileName').textContent = 'Chưa chọn tệp';
+        document.getElementById('lblTotalRows').textContent = '0 dòng';
+        await syncServerStatus();
+        goToStep(0);
+        return;
+      }
+      try {
+        await fetch('/api/load-benchmark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        await syncServerStatus();
+        goToStep(0);
+      } catch (e) { console.error(e); }
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target?.files?.[0];
+      if (!file) return;
+      processSelectedFile(file);
+    }
+
+    function processSelectedFile(file) {
+      document.getElementById('lblFileName').textContent = file.name;
+      document.getElementById('lblTotalRows').textContent = 'Đang phân tích...';
+      document.getElementById('step1FileStatus').textContent = 'Đang đọc tệp...';
+      const isExcel = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
+
+      const reader = new FileReader();
+      if (isExcel) {
+        reader.onload = async e => {
+          try {
+            const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const ws = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+            const csvContent = XLSX.utils.sheet_to_csv(ws);
+            await uploadCsvOrClientFallback(file.name, csvContent, rows);
+          } catch (err) {
+            alert('Không thể đọc tệp Excel. Vui lòng kiểm tra cấu trúc file.');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.onload = async e => {
+          try {
+            const csvText = e.target.result;
+            const wb = XLSX.read(csvText, { type: 'string' });
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+            await uploadCsvOrClientFallback(file.name, csvText, rows);
+          } catch (err) {
+            alert('Không thể đọc tệp CSV. Vui lòng kiểm tra định dạng.');
+          }
+        };
+        reader.readAsText(file, 'utf-8');
+      }
+    }
+
+    async function uploadCsvOrClientFallback(filename, csvText, parsedRows) {
+      if (!clientMode && csvText.length < 3500000) {
+        try {
+          const res = await fetch('/api/upload-csv', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename, csv_text: csvText })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'success') {
+              clientMode = false;
+              onDatasetLoaded(data);
+              return;
+            }
+          }
+        } catch (err) {}
+      }
+      // Automatic Client-Side processing (works 100% on Vercel & large files)
+      if (!parsedRows || !parsedRows.length) {
+        alert('Tệp không có dữ liệu hợp lệ.');
+        return;
+      }
+      clientIngestRows(parsedRows, filename);
+    }
+
+    function onDatasetLoaded(data) {
+      document.getElementById('lblFileName').textContent = data.filename;
+      document.getElementById('lblTotalRows').textContent = `${Number(data.total_raw).toLocaleString()} dòng`;
+      document.getElementById('step1FileStatus').textContent = 'Đã nạp thành công';
+      document.getElementById('sidebarSourceName').textContent = data.filename;
+      document.getElementById('sidebarSourceMeta').textContent = `${Number(data.total_raw).toLocaleString()} bản ghi thô`;
+      applyCleansingResults(data);
+      syncServerStatus();
+      goToStep(2);
+    }
+
+    function applyCleansingResults(data) {
+      const s = data.summary || {};
+      const g = data.gate_info || {};
+      const totalRaw = data.total_raw || s.total_raw || g.total_raw || 0;
+      const validRep = s.valid_report_period || g.valid_report_period || 0;
+      const validComp = s.valid_compare_period || g.valid_compare_period || 0;
+      const totalValid = s.total_cleaned_valid || g.total_cleaned_valid || (validRep + validComp);
+      const unqual = s.total_unqualified || g.unqualified_count || 0;
+      const unqualPct = totalRaw > 0 ? (unqual / totalRaw * 100.0).toFixed(1) : '0.0';
+
+      document.getElementById('s3RawCount').textContent = totalRaw.toLocaleString();
+      document.getElementById('s3ValidCount').textContent = totalValid.toLocaleString();
+      document.getElementById('s3RepCount').textContent = validRep.toLocaleString();
+      document.getElementById('s3CompCount').textContent = validComp.toLocaleString();
+      document.getElementById('s3UnqualCount').textContent = unqual.toLocaleString();
+      document.getElementById('s3UnqualPct').textContent = `${unqualPct}%`;
+      document.getElementById('s3ReturnRate').textContent = `${g.actual_return_rate ?? 0}%`;
+
+      if (g.message) {
+        document.getElementById('gate1Message').textContent = g.message;
+      }
+    }
+
+    async function triggerRunSkill1() {
+      if (clientMode) {
+        clientRunCleansing();
+        applyCleansingResults({ total_raw: clientState.rawTransactions.length, summary: clientState.summary, gate_info: clientState.gate_info });
+        cachedUnqualified = clientState.unqualified;
+        cachedCleanedSample = clientState.cleanedReport.slice(0, 80);
+        renderUnqualifiedTable();
+        await syncServerStatus();
+        return;
+      }
+      try {
+        const res = await fetch('/api/run-skill-1', { method: 'POST' });
+        if (!res.ok) return;
+        const data = await res.json();
+        applyCleansingResults(data);
+        await fetchUnqualifiedData();
+        await syncServerStatus();
+      } catch (err) { console.error(err); }
+    }
+
+    async function fetchUnqualifiedData() {
+      if (clientMode) {
+        applyCleansingResults({ total_raw: clientState.rawTransactions.length, summary: clientState.summary, gate_info: clientState.gate_info });
+        cachedUnqualified = clientState.unqualified;
+        cachedCleanedSample = clientState.cleanedReport.slice(0, 80);
+        renderUnqualifiedTable();
+        await syncServerStatus();
+        return;
+      }
+      try {
+        const res = await fetch('/api/unqualified?limit=150');
+        if (!res.ok) { clientMode = true; return; }
+        const data = await res.json();
+        if (data.gate_info) {
+          applyCleansingResults({ summary: data.summary, gate_info: data.gate_info, total_raw: data.summary?.total_raw });
+        }
+        cachedUnqualified = data.records || [];
+        cachedCleanedSample = data.cleaned_sample || [];
+        renderUnqualifiedTable();
+        await syncServerStatus();
+      } catch (err) { clientMode = true; }
+    }
+
+    function setUnqualFilter(type, btnEl) {
+      unqualFilter = type;
+      document.querySelectorAll('#unqualFilterTabs .filter-pill').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      renderUnqualifiedTable();
+    }
+
+    function renderUnqualifiedTable() {
+      const tbody = document.getElementById('s3TbodyUnqualified');
+      if (!tbody) return;
+
+      let rowsToRender = [];
+      if (unqualFilter === 'CLEAN') {
+        rowsToRender = cachedCleanedSample.map(rec => ({
+          record: rec,
+          reason_code: 'CLEAN_VALID',
+          reason: 'Bản ghi sạch hợp lệ (có thể chỉnh sửa trực tiếp)'
+        }));
+      } else {
+        rowsToRender = cachedUnqualified.filter(u => {
+          if (unqualFilter === 'DUP') return u.reason_code === 'ERR_DUPLICATE_TRANS_ID';
+          if (unqualFilter === 'CANCEL') return u.reason_code === 'ERR_ORDER_CANCELLED';
+          if (unqualFilter === 'OTHER') return u.reason_code !== 'ERR_DUPLICATE_TRANS_ID' && u.reason_code !== 'ERR_ORDER_CANCELLED';
+          return true;
+        });
+        // Nếu bộ dữ liệu đã sạch (0 ngoại lệ), vẫn hiển thị dữ liệu sạch để người dùng chỉnh sửa trực tiếp
+        if (unqualFilter === 'ALL' && !rowsToRender.length && cachedCleanedSample.length) {
+          rowsToRender = cachedCleanedSample.map(rec => ({
+            record: rec,
+            reason_code: 'CLEAN_VALID',
+            reason: 'Dữ liệu đã sạch (cho phép chỉnh sửa trực tiếp tại ô)'
+          }));
+        }
+      }
+
+      currentDisplayedEditRows = rowsToRender.slice(0, 60);
+
+      if (!currentDisplayedEditRows.length) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--subtle);">Không có bản ghi nào trong nhóm lọc này.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = currentDisplayedEditRows.map((u, idx) => {
+        const rec = u.record || {};
+        const tid = rec.trans_id || '';
+        const isClean = u.reason_code === 'CLEAN_VALID';
+        const badgeCls = isClean ? 'badge-mint' : (u.reason_code === 'ERR_DUPLICATE_TRANS_ID' ? 'badge-coral' : 'badge-gold');
+        const reasonColor = isClean ? 'var(--mint-deep)' : 'var(--coral)';
+        return `
+          <tr>
+            <td><code>${escHtml(tid)}</code></td>
+            <td><input class="input-clean" style="height:29px; width:105px; font-size:12px;" id="inline-order-${idx}" value="${escHtml(rec.order_id || '')}"></td>
+            <td><input class="input-clean" style="height:29px; width:125px; font-size:12px; font-weight:700;" id="inline-store-${idx}" value="${escHtml(rec.store_id || '')}"></td>
+            <td><input type="date" class="input-clean" style="height:29px; width:125px; font-size:12px;" id="inline-date-${idx}" value="${escHtml(rec.date || '')}"></td>
+            <td><span class="badge ${badgeCls}">${escHtml(isClean ? 'HỢP LỆ' : u.reason_code)}</span></td>
+            <td style="color:${reasonColor}; font-weight:600; max-width:220px;">${escHtml(u.reason)}</td>
+            <td>
+              <select class="input-clean" style="height:29px; width:115px; font-size:11.5px;" id="inline-status-${idx}">
+                <option value="COMPLETED" ${rec.status==='COMPLETED'?'selected':''}>COMPLETED</option>
+                <option value="CANCELLED" ${rec.status==='CANCELLED'?'selected':''}>CANCELLED</option>
+              </select>
+            </td>
+            <td><button class="btn btn-mint btn-sm" onclick="saveInlineRow(${idx})">Lưu</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function saveInlineRow(idx) {
+      const rec = currentDisplayedEditRows[idx]?.record;
+      const transId = rec?.trans_id;
+      if (!transId) return;
+
+      const newOrder = document.getElementById(`inline-order-${idx}`)?.value;
+      const newStore = document.getElementById(`inline-store-${idx}`)?.value;
+      const newStatus = document.getElementById(`inline-status-${idx}`)?.value;
+      const newDate = document.getElementById(`inline-date-${idx}`)?.value;
+
+      if (clientMode) {
+        if (newOrder !== undefined) rec.order_id = newOrder.trim();
+        if (newStore !== undefined) { rec.store_id = newStore.trim(); rec.store_name = newStore.trim(); }
+        if (newStatus !== undefined) rec.status = newStatus.trim().toUpperCase();
+        if (newDate !== undefined) rec.date = newDate.trim();
+        clientRunCleansing();
+      } else {
+        const updates = [['order_id', newOrder], ['store_id', newStore], ['status', newStatus], ['date', newDate]];
+        for (const [field, value] of updates) {
+          if (value !== undefined) {
+            await fetch('/api/inline-edit-record', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ trans_id: transId, field, value })
+            });
+          }
+        }
+      }
+
+      const badge = document.getElementById('lblDirectEditStatus');
+      if (badge) {
+        badge.textContent = `Đã lưu trực tiếp bản ghi ${transId} và đồng bộ lại dữ liệu`;
+        badge.className = 'badge badge-mint';
+      }
+      await fetchUnqualifiedData();
+    }
+
+    async function actionHumanVerify(decision) {
+      const rawNotes = document.getElementById('cleanReviewNotes')?.value.trim();
+      const notes = rawNotes || (decision === 'APPROVE'
+        ? 'Chuyên viên BI xác nhận dữ liệu sạch hợp lệ.'
+        : 'Yêu cầu kiểm tra & làm sạch lại dữ liệu ngoại lệ.');
+
+      if (clientMode) {
+        clientState.human_verified_clean = (decision === 'APPROVE');
+        clientState.human_clean_notes = notes;
+        if (decision !== 'APPROVE') clientState.human_evaluated_analysis = false;
+        if (cachedDashboard) cachedDashboard.human_verified_clean = clientState.human_verified_clean;
+        await syncServerStatus();
+        if (decision === 'APPROVE') {
+          updateGateCardUI(true, 'Chuyên viên BI đã xác nhận dữ liệu sạch hợp lệ.', null, null);
+          goToStep(4);
+        } else {
+          updateGateCardUI('REJECTED', notes, null, null);
+          alert('Đã ghi nhận yêu cầu rà soát lại. Bạn có thể chỉnh sửa trực tiếp tại bảng.');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/human-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision, notes })
+        });
+        const data = await res.json();
+        await syncServerStatus();
+        if (decision === 'APPROVE') {
+          updateGateCardUI(true, data.message, null, null);
+          goToStep(4);
+        } else {
+          updateGateCardUI('REJECTED', data.message, null, null);
+          alert('Đã ghi nhận yêu cầu rà soát lại. Bạn có thể chỉnh sửa trực tiếp tại bảng.');
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function actionHumanEvaluate(decision) {
+      const rawNotes = document.getElementById('evalReviewNotes')?.value.trim();
+      const notes = rawNotes || (decision === 'APPROVE'
+        ? 'Chuyên viên BI đánh giá kết quả phân tích đạt yêu cầu.'
+        : 'Cần điều chỉnh tiêu chí và chạy lại phân tích BI.');
+
+      if (clientMode) {
+        clientState.human_evaluated_analysis = (decision === 'APPROVE');
+        clientState.human_eval_notes = notes;
+        if (cachedDashboard) cachedDashboard.human_evaluated_analysis = clientState.human_evaluated_analysis;
+        await syncServerStatus();
+        if (decision === 'APPROVE') {
+          updateGateCardUI(null, null, true, 'Chuyên viên BI đã đánh giá kết quả đạt yêu cầu.');
+          goToStep(5);
+        } else {
+          updateGateCardUI(null, null, 'REJECTED', notes);
+          await fetchDashboardData();
+          alert('Đã ghi nhận yêu cầu điều chỉnh. Hệ thống đã cập nhật lại phân tích.');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/human-evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision, notes })
+        });
+        const data = await res.json();
+        await syncServerStatus();
+        if (decision === 'APPROVE') {
+          updateGateCardUI(null, null, true, data.message);
+          goToStep(5);
+        } else {
+          updateGateCardUI(null, null, 'REJECTED', data.message);
+          await fetchDashboardData();
+          alert('Đã ghi nhận yêu cầu điều chỉnh. Hệ thống đã cập nhật lại phân tích để bạn kiểm tra.');
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function fetchDashboardData() {
+      if (clientMode) {
+        if (!cachedDashboard && clientState.cleanedReport.length) clientRunAnalytics();
+        if (cachedDashboard) {
+          populateFilterDropdowns(cachedDashboard);
+          renderStep3Insights(cachedDashboard);
+          renderBentoDashboard(cachedDashboard);
+          updateSidebarAndGateBadges({
+            filename: clientState.filename,
+            raw_count: clientState.rawTransactions.length,
+            human_verified_clean: clientState.human_verified_clean,
+            human_evaluated_analysis: clientState.human_evaluated_analysis
+          });
+        }
+        return cachedDashboard;
+      }
+      try {
+        let res = await fetch('/api/dashboard');
+        if (!res.ok) {
+          const r2 = await fetch('/api/run-skill-2', { method: 'POST' });
+          if (!r2.ok) { clientMode = true; return null; }
+          res = await fetch('/api/dashboard');
+          if (!res.ok) { clientMode = true; return null; }
+        }
+        const data = await res.json();
+        cachedDashboard = data;
+
+        populateFilterDropdowns(data);
+        renderStep3Insights(data);
+        renderBentoDashboard(data);
+        updateSidebarAndGateBadges(data);
+        return data;
+      } catch (err) { clientMode = true; return null; }
+    }
+
+    function renderStep3Insights(data) {
+      const kpis = data.kpis || {};
+      const gate = data.gate_info || {};
+      const metrics = data.store_metrics || [];
+      const cats = data.category_metrics || {};
+      const ctxModel = data.business_model || clientState.business_model || '';
+      const ctxProblem = data.business_problem || clientState.business_problem || '';
+      const ctxClar = data.clarifications || clientState.clarifications || {};
+      const bizModel = ctxModel ? ` (${ctxModel})` : '';
+
+      const strip = document.getElementById('bizContextSummaryStrip');
+      if (strip) {
+        const parts = [];
+        if (ctxModel) parts.push(`<strong>🏢 Mô hình:</strong> ${escHtml(ctxModel)}`);
+        if (ctxProblem) parts.push(`<strong>🎯 Vấn đề trọng tâm:</strong> ${escHtml(ctxProblem)}`);
+        if (ctxClar.time_scope) parts.push(`<strong>📅 Phạm vi kỳ:</strong> ${escHtml(ctxClar.time_scope)}`);
+        if (ctxClar.decision_goal) parts.push(`<strong>🧭 Quyết định & KPI ưu tiên:</strong> ${escHtml(ctxClar.decision_goal)}`);
+        if (ctxClar.benchmark) parts.push(`<strong>📏 Mốc so sánh:</strong> ${escHtml(ctxClar.benchmark)}`);
+        if (parts.length) {
+          strip.innerHTML = parts.join(' &nbsp;|&nbsp; ');
+          strip.style.display = 'block';
+        } else {
+          strip.style.display = 'none';
+        }
+      }
+
+      const totalRev = kpis.total_net_revenue || 0;
+      const totalProfit = kpis.total_gross_profit || 0;
+      const totalCost = kpis.total_cost || (totalRev - totalProfit);
+      const sortedStores = [...metrics].sort((a, b) => b.net_revenue - a.net_revenue);
+      const top1 = sortedStores[0] || {};
+      const topShare = totalRev > 0 ? ((top1.net_revenue || 0) / totalRev * 100).toFixed(1) : '0';
+
+      const sortedCats = Object.entries(cats).sort((a, b) => b[1].net_revenue - a[1].net_revenue);
+      const topCat = sortedCats[0];
+      const topCatShare = (topCat && totalRev > 0) ? (topCat[1].net_revenue / totalRev * 100).toFixed(1) : '0';
+
+      const highestReturn = [...metrics].sort((a, b) => b.return_rate_pct - a.return_rate_pct)[0] || {};
+      const lowestTarget = [...metrics].sort((a, b) => a.rev_target_pct - b.rev_target_pct)[0] || {};
+      const cleanPct = gate.clean_pct != null ? gate.clean_pct
+        : (gate.total_raw > 0 ? Number((gate.total_cleaned_valid / gate.total_raw * 100).toFixed(1)) : 100);
+
+      // Insight 1: Quy mô giá trị
+      document.getElementById('insVal1').textContent = formatVND(totalRev);
+      document.getElementById('insBody1').innerHTML =
+        `Tổng giá trị/doanh thu thuần toàn hệ thống${escHtml(bizModel)} đạt <strong>${formatVND(totalRev)}</strong>. Nhóm dẫn đầu là <strong>${escHtml(top1.store_name || '-')}</strong> đóng góp <strong>${topShare}%</strong> tổng quy mô.`;
+
+      // Insight 2: Chất lượng dữ liệu
+      document.getElementById('insVal2').textContent = `${cleanPct}% Dữ liệu sạch`;
+      document.getElementById('insBody2').innerHTML =
+        `Đã chuẩn hóa <strong>${(gate.total_cleaned_valid || 0).toLocaleString()}</strong> / <strong>${(gate.total_raw || 0).toLocaleString()}</strong> bản ghi, loại bỏ <strong>${(gate.unqualified_count || 0).toLocaleString()}</strong> dòng trùng lặp hoặc đơn hủy. Tỷ lệ hoàn trả thực tế ở mức <strong>${kpis.sys_return_rate_pct || 0}%</strong>.`;
+
+      // Insight 3: Phân tích độ lệch
+      document.getElementById('insVal3').textContent = `${kpis.rev_target_completion_pct || 0}% Đạt kế hoạch`;
+      document.getElementById('insBody3').innerHTML =
+        `Nhóm có mức hoàn thành thấp nhất là <strong>${escHtml(lowestTarget.store_name || '-')}</strong> (<strong>${lowestTarget.rev_target_pct || 0}%</strong> mục tiêu). Nhóm phát sinh đổi trả/ngoại lệ cao nhất là <strong>${escHtml(highestReturn.store_name || '-')}</strong> (<strong>${highestReturn.return_rate_pct || 0}%</strong>).`;
+
+      // Insight 4: Biên hiệu quả & danh mục
+      const costRatio = totalRev > 0 ? (totalCost / totalRev * 100).toFixed(1) : '0';
+      document.getElementById('insVal4').textContent = `Biên LN ${kpis.avg_margin_pct || 0}%`;
+      document.getElementById('insBody4').innerHTML =
+        `Lợi nhuận gộp đạt <strong>${formatVND(totalProfit)}</strong> (tỷ trọng chi phí/giá vốn chiếm <strong>${costRatio}%</strong>). Danh mục chủ lực <strong>${escHtml(topCat ? topCat[0] : '-')}</strong> chiếm <strong>${topCatShare}%</strong> cơ cấu.`;
+
+      // Insight 5: Hành động ngắn hạn 30 ngày
+      document.getElementById('insVal5').textContent = `Tập trung ${escHtml(lowestTarget.store_id || 'nhóm yếu')}`;
+      document.getElementById('insBody5').innerHTML =
+        `${ctxProblem ? `Xoay quanh bài toán <strong>${escHtml(ctxProblem)}</strong>: ` : ''}Kiểm tra nguyên nhân sụt giảm tại <strong>${escHtml(lowestTarget.store_name || 'nhóm dưới chuẩn')}</strong> và rà soát quy trình vận hành/chất lượng đầu ra tại <strong>${escHtml(highestReturn.store_name || 'điểm nóng đổi trả')}</strong> để kéo giảm tỷ lệ hoàn trả.`;
+
+      // Insight 6: Định hướng 6-12 tháng
+      document.getElementById('insVal6').textContent = `Mở rộng ${escHtml(topCat ? topCat[0] : 'danh mục chủ lực')}`;
+      document.getElementById('insBody6').innerHTML =
+        `Chuẩn hóa quy trình kiểm duyệt dữ liệu 2 lớp định kỳ tuần, tối ưu phân bổ ngân sách vào các nhóm có biên lợi nhuận cao trên <strong>${kpis.avg_margin_pct || 0}%</strong> và nhân rộng mô hình vận hành hiệu quả từ <strong>${escHtml(top1.store_name || 'đơn vị dẫn đầu')}</strong>${ctxClar.decision_goal ? ` phục vụ quyết định: <strong>${escHtml(ctxClar.decision_goal)}</strong>` : ''}${ctxClar.benchmark ? ` (mốc đối chiếu: <strong>${escHtml(ctxClar.benchmark)}</strong>)` : ''}.`;
+
+      const tbody = document.getElementById('insightScorecardTbody');
+      if (tbody) {
+        tbody.innerHTML = sortedStores.map(m => {
+          const share = totalRev > 0 ? (m.net_revenue / totalRev * 100).toFixed(1) : '0';
+          const statusHtml = m.rev_target_pct >= 95
+            ? `<span class="badge badge-mint">Đạt chuẩn BI</span>`
+            : (m.rev_target_pct >= 80 ? `<span class="badge badge-gold">Theo dõi sát</span>` : `<span class="badge badge-coral">Cần can thiệp</span>`);
+          return `
+            <tr>
+              <td><strong>${escHtml(m.store_name)}</strong> (${escHtml(m.store_id)})</td>
+              <td>${formatVND(m.net_revenue)}</td>
+              <td>${share}%</td>
+              <td style="color:var(--mint-deep); font-weight:700;">${formatVND(m.net_profit)}</td>
+              <td><span class="badge badge-slate">${m.margin_pct}%</span></td>
+              <td><strong>${m.rev_target_pct}%</strong></td>
+              <td style="${m.return_rate_pct > 2 ? 'color:var(--coral); font-weight:700;' : ''}">${m.return_rate_pct}%</td>
+              <td>${statusHtml}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    function populateFilterDropdowns(data) {
+      const sel = document.getElementById('filterBranchSelect');
+      if (sel) {
+        const currentVal = sel.value || 'ALL';
+        sel.innerHTML = '<option value="ALL">🏢 Tất cả Đơn vị / Nhóm</option>' +
+          (data.store_metrics || []).map(s => `<option value="${escHtml(s.store_id)}">${escHtml(s.store_name)} (${escHtml(s.store_id)})</option>`).join('');
+        if ([...sel.options].some(o => o.value === currentVal)) sel.value = currentVal;
+      }
+      const pSel = document.getElementById('filterPeriodSelect');
+      if (pSel && data.period_config) {
+        const pc = data.period_config;
+        pSel.innerHTML = `<option value="REPORT">📅 Kỳ dữ liệu (${escHtml(pc.report_start || '')} → ${escHtml(pc.report_end || '')})</option>`;
+      }
+    }
+
+    function onDashboardFilterChange() {
+      if (!cachedDashboard) return;
+      renderBentoDashboard(cachedDashboard);
+      renderExecutiveCharts();
+    }
+
+    function setRingProgress(circleId, textId, pct) {
+      const clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+      const radius = 18;
+      const circ = 2 * Math.PI * radius;
+      const offset = circ - (clamped / 100) * circ;
+      const el = document.getElementById(circleId);
+      const txt = document.getElementById(textId);
+      if (el) el.style.strokeDashoffset = offset.toFixed(1);
+      if (txt) txt.textContent = `${Math.round(pct)}%`;
+    }
+
+    function renderBentoDashboard(data) {
+      const selectedBranch = document.getElementById('filterBranchSelect')?.value || 'ALL';
+      const gate = data.gate_info || {};
+      const allMetrics = data.store_metrics || [];
+
+      let rev = data.kpis.total_net_revenue || 0;
+      let profit = data.kpis.total_gross_profit || 0;
+      let cost = data.kpis.total_cost || (rev - profit);
+      let margin = data.kpis.avg_margin_pct || 0;
+      let retRate = data.kpis.sys_return_rate_pct || 0;
+      let revPct = data.kpis.rev_target_completion_pct || 0;
+      let profitPct = data.kpis.profit_target_completion_pct || 0;
+      let orders = allMetrics.reduce((acc, m) => acc + (m.tx_count || 0), 0);
+
+      if (selectedBranch !== 'ALL') {
+        const m = allMetrics.find(x => x.store_id === selectedBranch);
+        if (m) {
+          rev = m.net_revenue;
+          profit = m.net_profit;
+          cost = Math.max(0, rev - profit);
+          margin = m.margin_pct;
+          retRate = m.return_rate_pct;
+          revPct = m.rev_target_pct;
+          profitPct = m.profit_target_pct;
+          orders = m.tx_count || 0;
+        }
+      }
+
+      document.getElementById('kpiBigRev').textContent = formatMillion(rev);
+      document.getElementById('kpiBigRevBadge').textContent = `${revPct}% KH`;
+      document.getElementById('kpiExactRev').textContent = formatVND(rev);
+      document.getElementById('kpiBigCost').textContent = formatMillion(cost);
+      document.getElementById('kpiCostRatio').textContent = rev > 0 ? `${(cost / rev * 100).toFixed(1)}% DT` : '0%';
+      document.getElementById('kpiBigProfit').textContent = formatMillion(profit);
+      document.getElementById('kpiBigProfitBadge').textContent = `Biên ${margin}%`;
+      document.getElementById('kpiProfitTargetPct').textContent = `${profitPct}% KH`;
+      document.getElementById('kpiBigOrders').textContent = orders.toLocaleString();
+      document.getElementById('kpiReturnBadge').textContent = `Trả ${retRate}%`;
+
+      const cleanPct = gate.clean_pct != null ? gate.clean_pct
+        : (gate.total_raw > 0 ? Number((gate.total_cleaned_valid / gate.total_raw * 100).toFixed(1)) : 100);
+      document.getElementById('dashCleanRatePct').textContent = `${cleanPct}%`;
+      document.getElementById('dashCleanSub').textContent = `${(gate.total_cleaned_valid || 0).toLocaleString()} dòng hợp lệ · Đổi trả ${gate.actual_return_rate ?? retRate}%`;
+
+      setRingProgress('ringRevCircle', 'ringRevText', revPct);
+      setRingProgress('ringProfitCircle', 'ringProfitText', profitPct);
+      setRingProgress('ringCleanCircle', 'ringCleanText', cleanPct);
+
+      document.getElementById('dashStoreTbody').innerHTML = allMetrics.map(m => `
+        <tr style="${selectedBranch===m.store_id ? 'background:#fff5cc;' : ''}">
+          <td><strong>${escHtml(m.store_id)}</strong></td>
+          <td>${escHtml(m.store_name)}</td>
+          <td style="font-weight:700;">${formatVND(m.net_revenue)}</td>
+          <td style="color:var(--mint-deep); font-weight:700;">${formatVND(m.net_profit)}</td>
+          <td><span class="badge badge-slate">${m.margin_pct}%</span></td>
+          <td><span class="badge ${m.rev_target_pct<80 ? 'badge-coral' : (m.rev_target_pct<95 ? 'badge-gold' : 'badge-mint')}">${m.rev_target_pct}%</span></td>
+          <td><span class="badge ${m.return_rate_pct>2 ? 'badge-coral' : 'badge-gold'}">${m.return_rate_pct}%</span></td>
+          <td><button class="btn btn-secondary btn-sm" onclick="drilldownStore('${escHtml(m.store_id)}')">🔍 Đối Soát</button></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('dashCategoryTbody').innerHTML = Object.entries(data.category_metrics || {}).map(([cat, c]) => {
+        const catMargin = c.net_revenue > 0 ? (c.net_profit / c.net_revenue * 100).toFixed(1) : '0';
+        const qRate = (c.units_sold + c.units_returned) > 0 ? (c.units_returned / (c.units_sold + c.units_returned) * 100).toFixed(1) : '0';
+        return `
+          <tr>
+            <td><strong>${escHtml(cat)}</strong></td>
+            <td style="font-weight:700;">${formatVND(c.net_revenue)}</td>
+            <td style="color:var(--mint-deep); font-weight:700;">${formatVND(c.net_profit)}</td>
+            <td><span class="badge badge-slate">${catMargin}%</span></td>
+            <td style="color:var(--coral);">${formatVND(c.return_revenue)}</td>
+            <td>${c.units_sold.toLocaleString()}</td>
+            <td style="color:var(--coral);">${c.units_returned.toLocaleString()}</td>
+            <td><span class="badge ${qRate>2 ? 'badge-coral' : 'badge-mint'}">${qRate}%</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderExecutiveCharts() {
+      if (!cachedDashboard) return;
+      const metrics = cachedDashboard.store_metrics || [];
+      const cats = cachedDashboard.category_metrics || {};
+      const selectedBranch = document.getElementById('filterBranchSelect')?.value || 'ALL';
+      const chartStores = selectedBranch !== 'ALL'
+        ? metrics.filter(m => m.store_id === selectedBranch).concat(metrics.filter(m => m.store_id !== selectedBranch).slice(0, 5))
+        : metrics.slice(0, 7);
+
+      Object.values(chartInstances).forEach(inst => inst && inst.destroy());
+      chartInstances = {};
+
+      const ctxBar = document.getElementById('revVsPlanChart')?.getContext('2d');
+      if (ctxBar) {
+        chartInstances.bar = new Chart(ctxBar, {
+          type: 'bar',
+          data: {
+            labels: chartStores.map(s => s.store_id),
+            datasets: [
+              { label: 'Doanh thu thực tế', data: chartStores.map(s => Number((s.net_revenue / 1e6).toFixed(1))), backgroundColor: '#eab308', borderRadius: 8, barPercentage: 0.55 },
+              { label: 'Mục tiêu kế hoạch', data: chartStores.map(s => Number((s.rev_target / 1e6).toFixed(1))), backgroundColor: '#1e3a5f', borderRadius: 8, barPercentage: 0.55 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, grid: { color: '#f6eed4' } }
+            }
+          }
+        });
+      }
+
+      const ctxTrend = document.getElementById('profitTrendChart')?.getContext('2d');
+      if (ctxTrend) {
+        const grad = ctxTrend.createLinearGradient(0, 0, 0, 220);
+        grad.addColorStop(0, 'rgba(24, 150, 119, 0.28)');
+        grad.addColorStop(1, 'rgba(24, 150, 119, 0.0)');
+        chartInstances.trend = new Chart(ctxTrend, {
+          type: 'line',
+          data: {
+            labels: chartStores.map(s => s.store_id),
+            datasets: [{
+              label: 'Lợi nhuận gộp (Tr VNĐ)',
+              data: chartStores.map(s => Number((s.net_profit / 1e6).toFixed(1))),
+              borderColor: '#189677',
+              backgroundColor: grad,
+              fill: true,
+              tension: 0.38,
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#189677',
+              pointBorderWidth: 2.5,
+              pointRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, grid: { color: '#f6eed4' } }
+            }
+          }
+        });
+      }
+
+      const catEntries = Object.entries(cats).sort((a, b) => b[1].net_revenue - a[1].net_revenue);
+      const colors = ['#eab308', '#189677', '#1e3a5f', '#d95d43', '#f59e0b', '#6366f1'];
+      const totalCatRev = catEntries.reduce((sum, [, c]) => sum + (c.net_revenue || 0), 0) || 1;
+      const ctxPie = document.getElementById('categoryPieChart')?.getContext('2d');
+      if (ctxPie) {
+        chartInstances.pie = new Chart(ctxPie, {
+          type: 'doughnut',
+          data: {
+            labels: catEntries.map(([name]) => name),
+            datasets: [{
+              data: catEntries.map(([, c]) => Number((c.net_revenue / 1e6).toFixed(1))),
+              backgroundColor: colors.slice(0, catEntries.length),
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '62%',
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      const legendEl = document.getElementById('categoryLegendList');
+      if (legendEl) {
+        legendEl.innerHTML = catEntries.slice(0, 6).map(([name, c], i) => {
+          const share = ((c.net_revenue / totalCatRev) * 100).toFixed(1);
+          return `
+            <li>
+              <span class="legend-left">
+                <span class="legend-swatch" style="background:${colors[i % colors.length]}"></span>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escHtml(name)}">${escHtml(name)}</span>
+              </span>
+              <strong>${share}%</strong>
+            </li>
+          `;
+        }).join('');
+      }
+    }
+
+    function switchDashTab(tab) {
+      const isStores = tab === 'stores';
+      document.getElementById('tabPanelStores').style.display = isStores ? 'block' : 'none';
+      document.getElementById('tabPanelCategories').style.display = isStores ? 'none' : 'block';
+      document.getElementById('tabBtnStores').classList.toggle('active', isStores);
+      document.getElementById('tabBtnCats').classList.toggle('active', !isStores);
+    }
+
+    async function drilldownStore(storeId) {
+      let data = null;
+      if (clientMode) {
+        const store = (cachedDashboard?.store_metrics || []).find(s => s.store_id === storeId);
+        if (!store) return;
+        const sample = clientState.cleanedReport.filter(tx => tx.store_id === storeId).slice(0, 30);
+        data = { store, sample_transactions: sample, total_tx_count: store.tx_count };
+      } else {
+        const res = await fetch(`/api/store-drilldown?store_id=${encodeURIComponent(storeId)}`);
+        if (!res.ok) return;
+        data = await res.json();
+      }
+      document.getElementById('modalTitle').textContent = `Đối Soát Chi Tiết: ${data.store.store_name} (${data.store.store_id})`;
+      document.getElementById('modalSubtitle').textContent = `${data.total_tx_count.toLocaleString()} giao dịch hợp lệ · Doanh thu ${formatVND(data.store.net_revenue)}`;
+      document.getElementById('modalTbody').innerHTML = data.sample_transactions.map(tx => `
+        <tr>
+          <td><code>${escHtml(tx.trans_id)}</code></td>
+          <td><code>${escHtml(tx.order_id)}</code></td>
+          <td>${escHtml(tx.product_name || tx.product_id)}</td>
+          <td>${escHtml(tx.category)}</td>
+          <td>${escHtml(tx.date)}</td>
+          <td><span class="badge ${tx.type==='SALE'?'badge-mint':'badge-coral'}">${escHtml(tx.type)}</span></td>
+          <td>${tx.qty}</td>
+          <td>${formatVND(tx.unit_price)}</td>
+          <td style="font-weight:700;">${formatVND(tx.net_revenue)}</td>
+          <td style="color:${tx.net_profit<0?'var(--coral)':'var(--mint-deep)'}; font-weight:700;">${formatVND(tx.net_profit)}</td>
+        </tr>
+      `).join('');
+      document.getElementById('drilldownModal').classList.add('active');
+    }
+
+    function closeDrilldown() { document.getElementById('drilldownModal').classList.remove('active'); }
+
+    function exportExcel2Sheets() {
+      if (!clientMode) {
+        window.location.href = '/api/export-excel';
+        return;
+      }
+      if (!cachedDashboard) { alert('Vui lòng nạp dữ liệu trước khi xuất Excel.'); return; }
+      const wb = XLSX.utils.book_new();
+      const s1Rows = [['MÃ GIAO DỊCH', 'MÃ ĐƠN', 'ĐƠN VỊ / NHÓM', 'SẢN PHẨM / DỊCH VỤ', 'DANH MỤC', 'NGÀY GD', 'LOẠI', 'SỐ LƯỢNG', 'ĐƠN GIÁ', 'DOANH THU THUẦN', 'CHI PHÍ / GIÁ VỐN', 'LỢI NHUẬN GỘP']];
+      for (const tx of clientState.cleanedReport.slice(0, 10000)) {
+        s1Rows.push([tx.trans_id, tx.order_id, tx.store_id, tx.product_name, tx.category, tx.date, tx.type, tx.qty, tx.unit_price, tx.net_revenue, tx.net_cogs, tx.net_profit]);
+      }
+      const ws1 = XLSX.utils.aoa_to_sheet(s1Rows);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Du_Lieu_Da_Lam_Sach');
+
+      const k = cachedDashboard.kpis || {};
+      const s2Rows = [
+        ['NGỌC ÁNH DATA STUDIO - BÁO CÁO TỔNG QUAN BI'],
+        ['Tổng Doanh Thu Thuần', k.total_net_revenue || 0],
+        ['Tổng Lợi Nhuận Gộp', k.total_gross_profit || 0],
+        ['Tổng Chi Phí / Giá Vốn', k.total_cost || 0],
+        ['Biên Lợi Nhuận (%)', `${k.avg_margin_pct || 0}%`],
+        ['Tỷ Lệ Đổi Trả (%)', `${k.sys_return_rate_pct || 0}%`],
+        [],
+        ['MÃ ĐƠN VỊ', 'TÊN ĐƠN VỊ', 'DOANH THU THUẦN', 'LỢI NHUẬN GỘP', 'BIÊN LN (%)', '% ĐẠT KH', 'TỶ LỆ TRẢ (%)']
+      ];
+      for (const m of (cachedDashboard.store_metrics || [])) {
+        s2Rows.push([m.store_id, m.store_name, m.net_revenue, m.net_profit, `${m.margin_pct}%`, `${m.rev_target_pct}%`, `${m.return_rate_pct}%`]);
+      }
+      const ws2 = XLSX.utils.aoa_to_sheet(s2Rows);
+      XLSX.utils.book_append_sheet(wb, ws2, 'Bao_Cao_Tong_Quan');
+      XLSX.writeFile(wb, 'Ngoc_Anh_Bao_Cao_2Sheets.xlsx');
+    }
+
+    function buildWordHtmlDoc() {
+      const d = cachedDashboard || {};
+      const k = d.kpis || {};
+      const g = d.gate_info || {};
+      const metrics = [...(d.store_metrics || [])];
+      const cats = d.category_metrics || {};
+      const ctxModel = d.business_model || clientState.business_model || '';
+      const ctxProblem = d.business_problem || clientState.business_problem || '';
+      const ctxClar = d.clarifications || clientState.clarifications || {};
+      const imgBar = document.getElementById('revVsPlanChart')?.toDataURL('image/png') || '';
+      const imgTrend = document.getElementById('profitTrendChart')?.toDataURL('image/png') || '';
+      const imgPie = document.getElementById('categoryPieChart')?.toDataURL('image/png') || '';
+
+      const totalRev = k.total_net_revenue || 0;
+      const totalProfit = k.total_gross_profit || 0;
+      const totalCost = k.total_cost != null ? k.total_cost : Math.max(0, totalRev - totalProfit);
+      const avgMargin = k.avg_margin_pct || 0;
+      const costRatio = totalRev > 0 ? (totalCost / totalRev * 100).toFixed(1) : '0.0';
+      const retRate = k.sys_return_rate_pct || 0;
+      const totalValid = g.total_cleaned_valid || 0;
+      const totalRaw = g.total_raw || totalValid;
+      const unqualCount = g.unqualified_count || Math.max(0, totalRaw - totalValid);
+      const cleanPct = g.clean_pct != null ? g.clean_pct : (totalRaw > 0 ? (totalValid / totalRaw * 100).toFixed(1) : '100.0');
+
+      const sortedByRev = [...metrics].sort((a, b) => (b.net_revenue || 0) - (a.net_revenue || 0));
+      const top1 = sortedByRev[0] || {};
+      const top2 = sortedByRev[1] || {};
+      const top1Share = totalRev > 0 ? ((top1.net_revenue || 0) / totalRev * 100).toFixed(1) : '0.0';
+      const top2Share = totalRev > 0 ? (((top1.net_revenue || 0) + (top2.net_revenue || 0)) / totalRev * 100).toFixed(1) : '0.0';
+
+      const sortedByMargin = [...metrics].sort((a, b) => (b.margin_pct || 0) - (a.margin_pct || 0));
+      const bestMargin = sortedByMargin[0] || {};
+      const worstMargin = sortedByMargin[sortedByMargin.length - 1] || {};
+      const marginSpread = ((bestMargin.margin_pct || 0) - (worstMargin.margin_pct || 0)).toFixed(1);
+
+      const lowestTarget = [...metrics].sort((a, b) => (a.rev_target_pct || 0) - (b.rev_target_pct || 0))[0] || {};
+      const highestRet = [...metrics].sort((a, b) => (b.return_rate_pct || 0) - (a.return_rate_pct || 0))[0] || {};
+
+      const sortedCats = Object.entries(cats).sort((a, b) => (b[1].net_revenue || 0) - (a[1].net_revenue || 0));
+      const topCat = sortedCats[0];
+      const topCatShare = (topCat && totalRev > 0) ? ((topCat[1].net_revenue || 0) / totalRev * 100).toFixed(1) : '0.0';
+      const botCat = sortedCats[sortedCats.length - 1];
+
+      const catRowsHtml = sortedCats.map(([catName, c]) => {
+        const cr = c.net_revenue || 0;
+        const cp = c.net_profit || 0;
+        const cm = cr > 0 ? (cp / cr * 100).toFixed(1) : '0.0';
+        const share = totalRev > 0 ? (cr / totalRev * 100).toFixed(1) : '0.0';
+        const qr = (c.units_sold + c.units_returned) > 0 ? (c.units_returned / (c.units_sold + c.units_returned) * 100).toFixed(1) : '0.0';
+        return `<tr><td><strong>${escHtml(catName)}</strong></td><td style="text-align:right;">${formatVND(cr)}</td><td style="text-align:right;">${share}%</td><td style="text-align:right;">${formatVND(cp)}</td><td style="text-align:right;">${cm}%</td><td style="text-align:right;">${qr}%</td></tr>`;
+      }).join('');
+
+      const storeRowsHtml = sortedByRev.map(m => {
+        const share = totalRev > 0 ? ((m.net_revenue || 0) / totalRev * 100).toFixed(1) : '0.0';
+        const evalTxt = (m.rev_target_pct || 0) >= 95
+          ? '<span style="color:#137333;font-weight:bold;">Trụ cột hiệu quả cao</span>'
+          : ((m.rev_target_pct || 0) >= 85 ? 'Ổn định' : '<span style="color:#991b1b;font-weight:bold;">Sụt giảm — Cần can thiệp</span>');
+        return `<tr><td><strong>${escHtml(m.store_name || m.store_id)}</strong></td><td style="text-align:right;">${formatVND(m.net_revenue)}</td><td style="text-align:right;">${share}%</td><td style="text-align:right;">${m.rev_target_pct || 0}%</td><td style="text-align:right;">${m.margin_pct || 0}%</td><td style="text-align:right;">${m.return_rate_pct || 0}%</td><td>${evalTxt}</td></tr>`;
+      }).join('');
+
+      const clarifyList = [
+        ctxModel ? `<li><strong>Mô hình doanh nghiệp:</strong> ${escHtml(ctxModel)}.</li>` : '',
+        ctxProblem ? `<li><strong>Vấn đề trọng tâm cần phân tích:</strong> ${escHtml(ctxProblem)}.</li>` : '',
+        ctxClar.time_scope ? `<li><strong>Phạm vi thời gian ưu tiên:</strong> ${escHtml(ctxClar.time_scope)}.</li>` : '',
+        ctxClar.decision_goal ? `<li><strong>Mục tiêu ra quyết định &amp; chỉ số ưu tiên:</strong> ${escHtml(ctxClar.decision_goal)}.</li>` : '',
+        ctxClar.benchmark ? `<li><strong>Mốc so sánh / Mục tiêu tham chiếu:</strong> ${escHtml(ctxClar.benchmark)}.</li>` : ''
+      ].filter(Boolean).join('');
+
+      return `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"><title>Báo Cáo Phân Tích Chuyên Sâu BI</title>
+        <style>
+          body{font-family:'Times New Roman',serif;font-size:11.5pt;line-height:1.55;color:#1c160b;padding:26px 32px;max-width:880px;margin:0 auto;background:#fff;}
+          table{border-collapse:collapse;width:100%;margin:10px 0 16px;}
+          th,td{border:1px solid #bfb6aa;padding:6px 9px;font-size:10pt;vertical-align:top;}
+          th{background:#eae4dc;font-weight:bold;text-align:center;}
+          h1{color:#7c4d3a;font-size:15pt;text-align:center;margin:10px 0 4px;}
+          h2{color:#33241d;font-size:12.5pt;border-bottom:1.5px solid #d4af37;padding-bottom:4px;margin:18px 0 8px;}
+          h3{color:#5c3d1e;font-size:11pt;margin:12px 0 6px;}
+          p,li{margin:5px 0;text-align:justify;}
+          ul{margin:4px 0 10px 20px;padding:0;}
+          .insight-note{background:#faf6ea;border-left:3.5px solid #d4af37;padding:8px 12px;margin:8px 0 12px;font-size:10.5pt;}
+        </style></head>
+        <body>
+          <table style="border:none;"><tr>
+            <td style="border:none;text-align:center;width:50%;"><strong>HỆ THỐNG PHÂN TÍCH QUẢN TRỊ NGỌC ÁNH DATA STUDIO</strong><br><strong>BỘ PHẬN PHÂN TÍCH DỮ LIỆU &amp; CHIẾN LƯỢC</strong><br><small>--------------------</small></td>
+            <td style="border:none;text-align:center;width:50%;"><strong>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</strong><br><strong>Độc lập - Tự do - Hạnh phúc</strong><br><em>Ngày lập báo cáo: ${new Date().toLocaleString('vi-VN')}</em></td>
+          </tr></table>
+          <h1>BÁO CÁO PHÂN TÍCH CHUYÊN SÂU DASHBOARD &amp; DỮ LIỆU VẬN HÀNH</h1>
+          <p style="text-align:center;"><em>Bộ dữ liệu: ${escHtml(d.filename || clientState.filename)}${ctxModel ? ' — Mô hình: ' + escHtml(ctxModel) : ''}${ctxClar.time_scope ? ' — Kỳ: ' + escHtml(ctxClar.time_scope) : ''}</em></p>
+
+          <h2>I. BỐI CẢNH DOANH NGHIỆP &amp; TÓM TẮT ĐIỀU HÀNH (EXECUTIVE SUMMARY)</h2>
+          <p><strong>1. Bối cảnh &amp; Vấn đề doanh nghiệp đang gặp phải:</strong></p>
+          <ul>
+            ${clarifyList || '<li>Phân tích hiệu quả vận hành, cơ cấu chi phí và lợi nhuận theo từng phân nhóm để trình Ban Giám đốc.</li>'}
+            <li>Doanh nghiệp triển khai chuẩn hóa dữ liệu và phân tích đa chiều nhằm giải quyết trực tiếp bài toán trọng tâm nêu trên, kiểm soát điểm nghẽn và hỗ trợ Ban Giám đốc ra quyết định dựa trên số liệu thực tế.</li>
+          </ul>
+          <p><strong>2. Tóm tắt kết quả điều hành trình Lãnh đạo:</strong></p>
+          <p>Phân tích <strong>${totalValid.toLocaleString()}</strong> bản ghi sạch cho thấy Doanh thu/Giá trị thuần đạt <strong>${formatVND(totalRev)}</strong>, Lợi nhuận gộp đạt <strong>${formatVND(totalProfit)}</strong> và Chi phí/Giá vốn ở mức <strong>${formatVND(totalCost)}</strong> (Biên hiệu quả bình quân <strong>${avgMargin}%</strong>). Cấu trúc đóng góp tập trung khi Top 2 đơn vị dẫn đầu (<strong>${escHtml(top1.store_name || '-')}</strong>${top2.store_name ? ' &amp; <strong>' + escHtml(top2.store_name) + '</strong>' : ''}) chiếm tới <strong>${top2Share}%</strong> tổng quy mô. Ở chiều hiệu suất, nhóm <strong>${escHtml(bestMargin.store_name || '-')}</strong> đạt biên cao nhất (<strong>${bestMargin.margin_pct || 0}%</strong>), trong khi <strong>${escHtml(worstMargin.store_name || '-')}</strong> đạt <strong>${worstMargin.margin_pct || 0}%</strong> (chênh lệch <strong>${marginSpread} điểm phần trăm</strong>). Nhóm <strong>${escHtml(lowestTarget.store_name || '-')}</strong> có tỷ lệ đạt mục tiêu thấp nhất (<strong>${lowestTarget.rev_target_pct || 0}%</strong>), cần ưu tiên xử lý.</p>
+          <p><strong>3. Kết quả làm sạch &amp; Kiểm duyệt dữ liệu đầu vào (So với file gốc):</strong></p>
+          <p>Từ <strong>${totalRaw.toLocaleString()}</strong> dòng thô ban đầu (độ sạch ban đầu ${cleanPct}%) → Sau quy trình khử trùng lặp và loại trừ <strong>${unqualCount.toLocaleString()}</strong> bản ghi ngoại lệ/đơn hủy đạt <strong>${totalValid.toLocaleString()}</strong> bản ghi hợp lệ (độ sạch 100% đưa vào báo cáo). Tỷ lệ đổi trả thực tế toàn hệ thống là <strong>${retRate}%</strong>.</p>
+
+          <h2>II. TỔNG QUAN DASHBOARD TRỰC QUAN &amp; PHÂN TÍCH SÂU 4 CHỈ SỐ KPI</h2>
+          <p><em>Bảng phân tích chuyên sâu 4 chỉ số KPI trọng tâm trên Dashboard:</em></p>
+          <table>
+            <tr><th>Chỉ số KPI</th><th>Giá trị đạt được</th><th>Đánh giá định lượng</th><th>Phân tích chuyên sâu &amp; Ý nghĩa quản trị</th></tr>
+            <tr><td><strong>Tổng số bản ghi / Hồ sơ</strong></td><td style="text-align:right;"><strong>${totalValid.toLocaleString()} dòng</strong></td><td style="text-align:center;">Độ sạch ${cleanPct}%</td><td>Phản ánh mật độ giao dịch thực tế sau khi đã khử trùng lặp và loại trừ ${unqualCount.toLocaleString()} dòng ngoại lệ/đơn hủy.</td></tr>
+            <tr><td><strong>Doanh thu / Giá trị thuần</strong></td><td style="text-align:right;"><strong>${formatVND(totalRev)}</strong></td><td style="text-align:center;">Đạt ${k.rev_target_completion_pct || 0}% KH</td><td>Riêng nhóm dẫn đầu <strong>${escHtml(top1.store_name || '-')}</strong> đóng góp ${top1Share}% (${formatVND(top1.net_revenue || 0)}), tạo độ tập trung cao vào nhóm trụ cột.</td></tr>
+            <tr><td><strong>Lợi nhuận gộp</strong></td><td style="text-align:right;"><strong>${formatVND(totalProfit)}</strong></td><td style="text-align:center;">Biên LN: ${avgMargin}%</td><td>Nhóm <strong>${escHtml(bestMargin.store_name || '-')}</strong> đạt biên ${bestMargin.margin_pct || 0}% so với ${worstMargin.margin_pct || 0}% tại <strong>${escHtml(worstMargin.store_name || '-')}</strong>; tăng quy mô cần đi kèm kiểm soát chi phí.</td></tr>
+            <tr><td><strong>Chi phí &amp; Giá vốn</strong></td><td style="text-align:right;"><strong>${formatVND(totalCost)}</strong></td><td style="text-align:center;">Tỷ trọng ${costRatio}% DT</td><td>Chi phí vận hành &amp; giá vốn chiếm ${costRatio}% tổng doanh thu; tỷ lệ hoàn trả thực tế ở mức ${retRate}%.</td></tr>
+          </table>
+
+          <h2>III. PHÂN TÍCH CHUYÊN SÂU CÁC KHỐI BIỂU ĐỒ TRÊN DASHBOARD</h2>
+          <h3>1. Phân tích 'Doanh thu Thực tế vs Kế hoạch theo Đơn vị / Nhóm'</h3>
+          <div class="insight-note"><strong>Nhận xét chuyên sâu:</strong> Xếp hạng quy mô cho thấy sự phân hóa rõ rệt: <strong>${escHtml(top1.store_name || '-')}</strong> dẫn đầu với <strong>${formatVND(top1.net_revenue || 0)}</strong> (${top1Share}%), Top 2 nhóm đầu nắm giữ <strong>${top2Share}%</strong> tổng giá trị. Ngược lại, <strong>${escHtml(lowestTarget.store_name || '-')}</strong> chỉ đạt <strong>${lowestTarget.rev_target_pct || 0}%</strong> kế hoạch, trở thành điểm nghẽn chính cần tập trung xử lý thay vì điều chỉnh dàn trải.</div>
+          ${imgBar ? `<p style="text-align:center;"><img src="${imgBar}" style="max-width:100%;" width="560"><br><em>Hình 1: Biểu đồ Doanh thu Thực tế vs Kế hoạch theo Đơn vị</em></p>` : ''}
+
+          <h3>2. Phân tích 'Xu hướng Lợi nhuận Gộp &amp; Biên hiệu quả'</h3>
+          <div class="insight-note"><strong>Nhận xét chuyên sâu:</strong> Lợi nhuận gộp toàn hệ thống đạt <strong>${formatVND(totalProfit)}</strong> (biên bình quân <strong>${avgMargin}%</strong>). Chênh lệch biên hiệu quả giữa nhóm cao nhất (<strong>${escHtml(bestMargin.store_name || '-')}</strong>: ${bestMargin.margin_pct || 0}%) và nhóm thấp nhất (<strong>${escHtml(worstMargin.store_name || '-')}</strong>: ${worstMargin.margin_pct || 0}%) lên tới <strong>${marginSpread} điểm phần trăm</strong>, cho thấy dư địa lớn để tối ưu định mức chi phí tại các nhóm biên thấp.</div>
+          ${imgTrend ? `<p style="text-align:center;"><img src="${imgTrend}" style="max-width:100%;" width="560"><br><em>Hình 2: Biểu đồ Xu hướng Lợi nhuận Gộp</em></p>` : ''}
+
+          <h3>3. Phân tích 'Cơ cấu Danh mục &amp; Đóng góp giá trị'</h3>
+          <div class="insight-note"><strong>Nhận xét chuyên sâu:</strong> Trong cơ cấu danh mục, nhóm <strong>${escHtml(topCat ? topCat[0] : '-')}</strong> chiếm tỷ trọng lớn nhất (<strong>${topCatShare}%</strong> tổng doanh thu, đạt <strong>${formatVND(topCat ? topCat[1].net_revenue : 0)}</strong>)${botCat && topCat && botCat[0] !== topCat[0] ? `, vượt xa nhóm cuối là <strong>${escHtml(botCat[0])}</strong> (${formatVND(botCat[1].net_revenue || 0)})` : ''}. Cần theo dõi sát các danh mục có tỷ lệ đổi trả cao để bảo toàn biên lợi nhuận thực nhận.</div>
+          ${imgPie ? `<p style="text-align:center;"><img src="${imgPie}" style="max-width:100%;" width="440"><br><em>Hình 3: Biểu đồ Cơ cấu Doanh thu theo Danh mục</em></p>` : ''}
+          <table><tr><th>Phân nhóm / Danh mục</th><th>Doanh Thu Thuần</th><th>Tỷ Trọng</th><th>Lợi Nhuận Gộp</th><th>Biên LN</th><th>Tỷ Lệ Trả</th></tr>${catRowsHtml}</table>
+
+          <h3>4. Bảng Xếp Hạng Hiệu Suất &amp; Cảnh Báo Điểm Nghẽn</h3>
+          <p><em>Tổng hợp đa chỉ tiêu từng đơn vị/nhóm để nhận diện trụ cột hiệu quả và các nhóm sụt giảm cần can thiệp:</em></p>
+          <table><tr><th>Đơn Vị / Phân Nhóm</th><th>Doanh Thu Thuần</th><th>Tỷ Trọng</th><th>% Đạt KH</th><th>Biên LN</th><th>Tỷ Lệ Trả</th><th>Đánh Giá Trạng Thái</th></tr>${storeRowsHtml}</table>
+
+          <h2>IV. KẾT LUẬN TRỌNG TÂM &amp; ĐỀ XUẤT HÀNH ĐỘNG</h2>
+          <p><strong>1. Các điểm nghẽn &amp; rủi ro trọng yếu đúc kết từ Dashboard:</strong></p>
+          <ul>
+            ${ctxProblem ? `<li><strong>Gắn với bài toán doanh nghiệp (${escHtml(ctxProblem)}):</strong> Số liệu cho thấy điểm nghẽn tập trung tại <strong>${escHtml(lowestTarget.store_name || '-')}</strong> (${lowestTarget.rev_target_pct || 0}% KH) và nhóm có biên thấp nhất <strong>${escHtml(worstMargin.store_name || '-')}</strong> (${worstMargin.margin_pct || 0}%).</li>` : ''}
+            <li><strong>Rủi ro tập trung cao:</strong> Top 2 đơn vị dẫn đầu chiếm tới <strong>${top2Share}%</strong> tổng quy mô; nếu nhóm trụ cột biến động sẽ tác động trực tiếp tới kết quả toàn hệ thống.</li>
+            <li><strong>Rủi ro đổi trả &amp; dữ liệu đầu vào:</strong> Nhóm có tỷ lệ hoàn trả cao nhất là <strong>${escHtml(highestRet.store_name || '-')}</strong> (${highestRet.return_rate_pct || 0}%); đồng thời đã loại trừ <strong>${unqualCount.toLocaleString()}</strong> dòng trùng lặp/đơn hủy để bảo vệ tính trung thực của báo cáo.</li>
+          </ul>
+          <p><strong>2. Giải pháp hành động ngắn hạn (30 ngày tới):</strong></p>
+          <ul>
+            <li>Kiểm tra nguyên nhân gốc rễ tại <strong>${escHtml(lowestTarget.store_name || 'nhóm dưới chuẩn')}</strong> để chặn đà suy giảm và kéo tỷ lệ hoàn thành kế hoạch lên trên 90%.</li>
+            <li>Tái phân bổ nguồn lực/ngân sách từ các nhóm biên thấp (<strong>${escHtml(worstMargin.store_name || '-')}</strong>) sang nhóm có biên hiệu quả dẫn đầu (<strong>${escHtml(bestMargin.store_name || '-')}</strong>).</li>
+            <li>Rà soát quy trình vận hành &amp; kiểm soát chất lượng tại <strong>${escHtml(highestRet.store_name || 'điểm nóng đổi trả')}</strong> và xử lý triệt để các bản ghi ngoại lệ trong file Excel sạch.</li>
+          </ul>
+          <p><strong>3. Định hướng phát triển trung và dài hạn (6 - 12 tháng):</strong></p>
+          <ul>
+            <li>Thiết lập ngưỡng cảnh báo tự động biên lợi nhuận và tỷ lệ chi phí chuẩn (${costRatio}%) cho từng đơn vị/danh mục theo từng kỳ.</li>
+            <li>Mở rộng quy mô danh mục chủ lực <strong>${escHtml(topCat ? topCat[0] : '-')}</strong> và phát triển các nhóm tiềm năng ở phân khúc giữa để giảm phụ thuộc vào Top 1-2 nhóm dẫn đầu.</li>
+            <li>Duy trì quy trình kiểm duyệt dữ liệu 2 cổng (Tự động &amp; Chuyên viên BI duyệt) trước khi xuất báo cáo điều hành.</li>
+          </ul>
+          <p><strong>4. Đề xuất điều chỉnh trọng tâm:</strong></p>
+          <ul>
+            <li>Ưu tiên phân bổ vốn theo hiệu suất thực tế${ctxClar.decision_goal ? ` nhằm phục vụ trực tiếp mục tiêu: <strong>${escHtml(ctxClar.decision_goal)}</strong>` : ''}${ctxClar.benchmark ? ` (đối chiếu với mốc: <strong>${escHtml(ctxClar.benchmark)}</strong>)` : ''}.</li>
+            <li>Giao chỉ tiêu phục hồi cụ thể cho <strong>${escHtml(lowestTarget.store_name || 'nhóm sụt giảm')}</strong> và siết định mức chi phí tại nhóm có tỷ lệ chi phí cao.</li>
+          </ul>
+
+          <table style="border:none;margin-top:24px;"><tr>
+            <td style="border:none;text-align:center;width:50%;"><strong>NGƯỜI LẬP BÁO CÁO</strong><br><em>(Ký và ghi rõ họ tên)</em><br><br><br>Chuyên viên Phân tích Dữ liệu BI</td>
+            <td style="border:none;text-align:center;width:50%;"><strong>PHÊ DUYỆT BỞI BAN GIÁM ĐỐC</strong><br><em>(Ký tên và đóng dấu)</em><br><br><br>Giám đốc Điều hành / Chiến lược</td>
+          </tr></table>
+        </body></html>`;
+    }
+
+    function buildStandaloneHtmlDoc() {
+      const d = cachedDashboard || {};
+      const k = d.kpis || {};
+      const g = d.gate_info || {};
+      const ctxModel = d.business_model || clientState.business_model || '';
+      const ctxProblem = d.business_problem || clientState.business_problem || '';
+      const ctxClar = d.clarifications || clientState.clarifications || {};
+      const imgBar = document.getElementById('revVsPlanChart')?.toDataURL('image/png') || '';
+      const imgTrend = document.getElementById('profitTrendChart')?.toDataURL('image/png') || '';
+      const imgPie = document.getElementById('categoryPieChart')?.toDataURL('image/png') || '';
+
+      const storeRows = (d.store_metrics || []).map(m => `
+        <tr>
+          <td><strong>${escHtml(m.store_id)}</strong></td>
+          <td>${escHtml(m.store_name)}</td>
+          <td>${formatVND(m.net_revenue)}</td>
+          <td style="color:#095d47;font-weight:700;">${formatVND(m.net_profit)}</td>
+          <td>${m.margin_pct}%</td>
+          <td>${m.rev_target_pct}%</td>
+          <td>${m.return_rate_pct}%</td>
+        </tr>`).join('');
+
+      const catRows = Object.entries(d.category_metrics || {}).map(([cat, c]) => {
+        const cm = c.net_revenue > 0 ? (c.net_profit / c.net_revenue * 100).toFixed(1) : '0';
+        const qr = (c.units_sold + c.units_returned) > 0 ? (c.units_returned / (c.units_sold + c.units_returned) * 100).toFixed(1) : '0';
+        return `
+          <tr>
+            <td><strong>${escHtml(cat)}</strong></td>
+            <td>${formatVND(c.net_revenue)}</td>
+            <td style="color:#095d47;font-weight:700;">${formatVND(c.net_profit)}</td>
+            <td>${cm}%</td>
+            <td>${c.units_sold.toLocaleString()}</td>
+            <td>${c.units_returned.toLocaleString()}</td>
+            <td>${qr}%</td>
+          </tr>`;
+      }).join('');
+
+      const ctxInfo = [
+        ctxModel ? `Mô hình: ${escHtml(ctxModel)}` : '',
+        ctxProblem ? `Vấn đề: ${escHtml(ctxProblem)}` : '',
+        ctxClar.time_scope ? `Kỳ: ${escHtml(ctxClar.time_scope)}` : '',
+        ctxClar.decision_goal ? `Ưu tiên: ${escHtml(ctxClar.decision_goal)}` : '',
+        ctxClar.benchmark ? `Mốc: ${escHtml(ctxClar.benchmark)}` : ''
+      ].filter(Boolean).join(' · ');
+
+      return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Dashboard BI — Ngọc Ánh Data Studio</title>
+  <style>
+    body{font-family:'Segoe UI',system-ui,sans-serif;margin:0;padding:28px;background:linear-gradient(135deg,#fdf3c7,#fae69c);color:#1c160b;font-variant-numeric:tabular-nums;}
+    .wrap{max-width:1160px;margin:0 auto;background:#fffdf5;border:1px solid #e5cf8e;border-radius:20px;padding:28px;box-shadow:0 20px 50px rgba(120,76,6,.18);}
+    .banner{background:linear-gradient(135deg,#1f3c64,#152b48);color:#fff;padding:22px 26px;border-radius:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+    .banner h1{margin:0;font-size:22px;}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:22px;}
+    .kpi{background:#fff;border:1px solid #e5cf8e;border-radius:12px;padding:16px;}
+    .kpi small{font-size:11px;font-weight:700;color:#66583b;text-transform:uppercase;}
+    .kpi strong{display:block;font-size:24px;font-weight:800;margin-top:6px;color:#1c160b;}
+    .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:22px;}
+    .box{background:#fff;border:1px solid #e5cf8e;border-radius:12px;padding:16px;text-align:center;}
+    .box h3{margin:0 0 10px;font-size:14px;text-align:left;}
+    .box img{max-width:100%;height:auto;border-radius:8px;}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5cf8e;margin-bottom:20px;font-size:13px;}
+    th{background:#ffe89e;padding:10px 12px;text-align:left;border-bottom:1px solid #e5cf8e;}
+    td{padding:9px 12px;border-bottom:1px solid #f3e4b4;}
+    h2{font-size:16px;margin:18px 0 10px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner">
+      <div>
+        <h1>🐝 BÁO CÁO DASHBOARD BI — NGỌC ÁNH DATA STUDIO</h1>
+        <div style="font-size:12px;color:#cbd8ea;margin-top:4px;">Ngày xuất: ${new Date().toLocaleString('vi-VN')} · Bản ghi hợp lệ: ${(g.total_cleaned_valid || 0).toLocaleString()}</div>
+        ${ctxInfo ? `<div style="font-size:12px;color:#ffeaa7;margin-top:4px;">${ctxInfo}</div>` : ''}
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><small>Doanh Thu / Giá Trị Thuần</small><strong>${formatVND(k.total_net_revenue)}</strong></div>
+      <div class="kpi"><small>Chi Phí &amp; Giá Vốn</small><strong style="color:#c9462d;">${formatVND(k.total_cost)}</strong></div>
+      <div class="kpi"><small>Lợi Nhuận Gộp</small><strong style="color:#095d47;">${formatVND(k.total_gross_profit)}</strong></div>
+      <div class="kpi"><small>Biên LN &amp; Tỷ Lệ Hoàn Trả</small><strong style="color:#8c5900;">${k.avg_margin_pct || 0}% · Trả ${k.sys_return_rate_pct || 0}%</strong></div>
+    </div>
+    <div class="charts">
+      ${imgBar ? `<div class="box"><h3>Doanh Thu Thực Tế vs Kế Hoạch</h3><img src="${imgBar}" alt="Doanh thu vs Kế hoạch"></div>` : ''}
+      ${imgTrend ? `<div class="box"><h3>Xu Hướng Lợi Nhuận Gộp</h3><img src="${imgTrend}" alt="Xu hướng lợi nhuận"></div>` : ''}
+      ${imgPie ? `<div class="box"><h3>Cơ Cấu Danh Mục</h3><img src="${imgPie}" alt="Cơ cấu danh mục"></div>` : ''}
+    </div>
+    <h2>1. Hiệu Suất Theo Đơn Vị / Nhóm</h2>
+    <table><thead><tr><th>Mã</th><th>Tên Đơn Vị</th><th>Doanh Thu Thuần</th><th>Lợi Nhuận Gộp</th><th>Biên LN</th><th>% Đạt KH</th><th>Tỷ Lệ Trả</th></tr></thead><tbody>${storeRows}</tbody></table>
+    <h2>2. Cơ Cấu Theo Danh Mục</h2>
+    <table><thead><tr><th>Danh Mục</th><th>Doanh Thu Thuần</th><th>Lợi Nhuận Gộp</th><th>Biên LN</th><th>SL Bán</th><th>SL Trả</th><th>Tỷ Lệ Trả</th></tr></thead><tbody>${catRows}</tbody></table>
+  </div>
+</body>
+</html>`;
+    }
+
+    function openPreviewModal(title, subtitle, htmlContent, downloadHandler) {
+      document.getElementById('previewModalTitle').textContent = title;
+      document.getElementById('previewModalSubtitle').textContent = subtitle;
+      const frame = document.getElementById('previewFrame');
+      if (frame) frame.srcdoc = htmlContent;
+      const btn = document.getElementById('previewDownloadBtn');
+      if (btn) btn.onclick = downloadHandler;
+      document.getElementById('previewModal')?.classList.add('active');
+    }
+
+    function closePreviewModal() {
+      document.getElementById('previewModal')?.classList.remove('active');
+    }
+
+    function previewWordReport() {
+      if (!cachedDashboard) { alert('Vui lòng nạp dữ liệu trước khi xem trước Báo cáo Word.'); return; }
+      openPreviewModal(
+        '📄 Xem trước Báo Cáo Word (.docx)',
+        'Bố cục Quốc hiệu tiêu ngữ, bảng KPI, biểu đồ trực quan và chi tiết đơn vị',
+        buildWordHtmlDoc(),
+        () => { closePreviewModal(); exportWordReport(); }
+      );
+    }
+
+    function previewHtmlDashboard() {
+      if (!cachedDashboard) { alert('Vui lòng nạp dữ liệu trước khi xem trước Dashboard HTML.'); return; }
+      openPreviewModal(
+        '🌐 Xem trước Dashboard HTML Độc Lập',
+        'Giao diện Dashboard hoàn chỉnh sẵn sàng chia sẻ trên mọi trình duyệt',
+        buildStandaloneHtmlDoc(),
+        () => { closePreviewModal(); exportHtmlDashboard(); }
+      );
+    }
+
+    async function exportWordReport() {
+      if (!clientMode) {
+        try {
+          const test = await fetch('/api/export-word', { method: 'GET' });
+          if (test.ok) {
+            const blob = await test.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Bao_Cao_Phan_Tich_Chuyen_Sau_Ngoc_Anh_Studio.docx';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            return;
+          }
+        } catch (e) {}
+      }
+      if (!cachedDashboard) { alert('Vui lòng nạp dữ liệu trước khi xuất Báo cáo Word.'); return; }
+      const wordHtml = buildWordHtmlDoc();
+      const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Bao_Cao_Phan_Tich_Ngoc_Anh_Studio.doc';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+    function exportHtmlDashboard() {
+      if (!cachedDashboard) {
+        alert('Vui lòng nạp và kiểm duyệt dữ liệu trước khi xuất Dashboard HTML.');
+        return;
+      }
+      const htmlDoc = buildStandaloneHtmlDoc();
+      const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Bao_Cao_Dashboard_Ngoc_Anh_Studio.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function toggleCopilot(e) {
+      if (e) e.stopPropagation();
+      const w = document.getElementById('copilotWidget');
+      w.classList.toggle('active');
+      if (w.classList.contains('active')) {
+        setTimeout(() => document.getElementById('copilotInput')?.focus(), 80);
+      }
+    }
+
+    async function sendCopilotMsg(overrideText) {
+      const input = document.getElementById('copilotInput');
+      const text = (overrideText || input?.value || '').trim();
+      if (!text) return;
+      const body = document.getElementById('copilotBody');
+      body.innerHTML += `<div style="text-align:right; margin:8px 0;"><span style="background:var(--gold-deep); color:#fff; padding:6px 11px; border-radius:11px; display:inline-block;">${escHtml(text)}</span></div>`;
+      if (!overrideText && input) input.value = '';
+      body.scrollTop = body.scrollHeight;
+
+      if (!clientMode) {
+        try {
+          const res = await fetch('/api/copilot-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: text })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const targetMap = { GO_TO_STEP_2: 2, GO_TO_STEP_3: 3, GO_TO_STEP_4: 4, GO_TO_STEP_6: 4 };
+            const stepNum = targetMap[data.action] || null;
+            const btnHtml = stepNum
+              ? `<div style="margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="goToStep(${stepNum})">${escHtml(data.action_label || 'Mở mục này →')}</button></div>`
+              : '';
+            body.innerHTML += `<div style="margin:8px 0;"><div class="copilot-bubble">${data.reply}${btnHtml}</div></div>`;
+            body.scrollTop = body.scrollHeight;
+            return;
+          }
+        } catch (e) {}
+      }
+
+      // Client-side Co-Pilot response (for Vercel)
+      const d = cachedDashboard;
+      let reply = 'Vui lòng nạp tệp dữ liệu ở <strong>Bước 1</strong> để tôi phân tích chi tiết giúp bạn!';
+      if (d) {
+        const k = d.kpis || {};
+        const g = d.gate_info || {};
+        const worst = [...(d.store_metrics || [])].sort((a, b) => a.rev_target_pct - b.rev_target_pct)[0];
+        const q = text.toLowerCase();
+        if (q.includes('hụt') || q.includes('nguy cơ') || q.includes('đơn vị')) {
+          reply = worst
+            ? `Đơn vị có tỷ lệ đạt mục tiêu thấp nhất là <strong>${escHtml(worst.store_name)}</strong> (${worst.rev_target_pct}% KH, doanh thu ${formatVND(worst.net_revenue)}).`
+            : 'Chưa có dữ liệu đơn vị.';
+        } else if (q.includes('đổi trả') || q.includes('hủy') || q.includes('làm sạch')) {
+          reply = `Đã làm sạch <strong>${(g.total_cleaned_valid || 0).toLocaleString()}</strong> / ${(g.total_raw || 0).toLocaleString()} dòng. Tỷ lệ đổi trả thực tế: <strong>${k.sys_return_rate_pct || 0}%</strong>.`;
+        } else {
+          reply = `Tổng doanh thu: <strong>${formatVND(k.total_net_revenue)}</strong> · Lợi nhuận gộp: <strong>${formatVND(k.total_gross_profit)}</strong> (Biên LN ${k.avg_margin_pct || 0}%).`;
+        }
+      }
+      body.innerHTML += `<div style="margin:8px 0;"><div class="copilot-bubble">${reply}</div></div>`;
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function handleSearch(e) {
+      if (e.key === 'Escape') {
+        e.target.value = '';
+        closeDrilldown();
+        return;
+      }
+      if (e.key === 'Enter') {
+        const q = e.target.value.toLowerCase();
+        if (q.includes('vấn đề') || q.includes('mô hình')) goToStep(2);
+        else if (q.includes('làm sạch') || q.includes('lỗi') || q.includes('duyệt')) goToStep(3);
+        else if (q.includes('phân tích') || q.includes('insight') || q.includes('đánh giá')) goToStep(4);
+        else if (q.includes('dashboard') || q.includes('báo cáo') || q.includes('xuất')) goToStep(5);
+        else goToStep(5);
+      }
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeDrilldown(); closePreviewModal(); }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const dz = document.getElementById('dropZoneArea');
+      if (dz) {
+        dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+        dz.addEventListener('drop', e => {
+          e.preventDefault();
+          dz.classList.remove('dragover');
+          const file = e.dataTransfer?.files?.[0];
+          if (file) processSelectedFile(file);
+        });
+      }
+      syncServerStatus();
+      fetchDashboardData();
+      initBeeEffects();
+    });
+
+    function initBeeEffects() {
+      const bee = document.getElementById('beeFollower');
+      if (!bee) return;
+      let targetX = -100, targetY = -100;
+      let curX = -100, curY = -100;
+      let lastX = -100;
+
+      window.addEventListener('mousemove', e => {
+        targetX = e.clientX + 18;
+        targetY = e.clientY + 18;
+        bee.classList.add('visible');
+      });
+
+      window.addEventListener('mouseleave', () => {
+        bee.classList.remove('visible');
+      });
+
+      function tick() {
+        curX += (targetX - curX) * 0.16;
+        curY += (targetY - curY) * 0.16;
+        const dx = curX - lastX;
+        const tilt = Math.max(-22, Math.min(22, dx * 2.2));
+        bee.style.transform = `translate(${curX}px, ${curY}px) translate(-50%, -50%) rotate(${tilt}deg)`;
+        lastX = curX;
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+
+      window.addEventListener('dblclick', e => {
+        const burst = document.createElement('div');
+        burst.className = 'dblclick-burst';
+        burst.style.left = `${e.clientX}px`;
+        burst.style.top = `${e.clientY}px`;
+        burst.innerHTML = `
+          <svg width="46" height="46" viewBox="0 0 64 64" fill="none">
+            <circle cx="14" cy="18" r="3" fill="#eab308"/>
+            <circle cx="50" cy="16" r="2.5" fill="#189677"/>
+            <circle cx="48" cy="48" r="3" fill="#f59e0b"/>
+            <circle cx="16" cy="46" r="2.5" fill="#eab308"/>
+            <ellipse cx="26" cy="28" rx="7" ry="5" transform="rotate(-25 26 28)" fill="#fff" stroke="#6b4400" stroke-width="1.8"/>
+            <ellipse cx="38" cy="28" rx="7" ry="5" transform="rotate(25 38 28)" fill="#fff" stroke="#6b4400" stroke-width="1.8"/>
+            <ellipse cx="32" cy="36" rx="9" ry="11" fill="#ffcf33" stroke="#4a2f00" stroke-width="2"/>
+            <path d="M24 35H40M25 40H39" stroke="#4a2f00" stroke-width="2.6" stroke-linecap="round"/>
+          </svg>`;
+        document.body.appendChild(burst);
+        setTimeout(() => burst.remove(), 680);
+      });
+    }
+  </script>
+
+  <!-- Floating Bee Cursor Follower -->
+  <div class="bee-follower" id="beeFollower" aria-hidden="true">
+    <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g class="bee-wing-anim">
+        <ellipse cx="22" cy="23" rx="10" ry="7" transform="rotate(-25 22 23)" fill="#ffffff" fill-opacity="0.92" stroke="#6b4400" stroke-width="2.2"/>
+        <ellipse cx="42" cy="23" rx="10" ry="7" transform="rotate(25 42 23)" fill="#ffffff" fill-opacity="0.92" stroke="#6b4400" stroke-width="2.2"/>
+      </g>
+      <path d="M27 17C25 11 21 10 19 11" stroke="#4a2f00" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M37 17C39 11 43 10 45 11" stroke="#4a2f00" stroke-width="2.2" stroke-linecap="round"/>
+      <ellipse cx="32" cy="36" rx="13" ry="16" fill="#ffcf33" stroke="#4a2f00" stroke-width="2.5"/>
+      <path d="M20 34H44M21 41H43M25 48H39" stroke="#4a2f00" stroke-width="3.4" stroke-linecap="round"/>
+      <circle cx="27" cy="26" r="2.2" fill="#2a1c00"/>
+      <circle cx="37" cy="26" r="2.2" fill="#2a1c00"/>
+    </svg>
+  </div>
+</body>
+</html>

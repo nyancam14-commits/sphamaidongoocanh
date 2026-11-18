@@ -1,0 +1,21 @@
+product_id,name,category,price,cogs
+SKU001,Áo Sơ Mi Nam Oxford,Thời trang Nam,450000,220000
+SKU002,Quần Tây Nam Slimfit,Thời trang Nam,550000,280000
+SKU003,Áo Thun Polo Cotton,Thời trang Nam,320000,150000
+SKU004,Áo Khoác Bomber Nam,Thời trang Nam,850000,480000
+SKU005,Đầm Xòe Nữ Voan Hoa,Thời trang Nữ,680000,310000
+SKU006,Chân Váy Chữ A Công Sở,Thời trang Nữ,420000,190000
+SKU007,Áo Kiểu Nữ Tay Bồng,Thời trang Nữ,390000,180000
+SKU008,Set Vest Nữ Thanh Lịch,Thời trang Nữ,1250000,650000
+SKU009,Thắt Lưng Da Bò Nam,Phụ kiện,350000,120000
+SKU010,Túi Xách Nữ Da Mềm,Phụ kiện,750000,320000
+SKU011,Ví Cầm Tay Mini,Phụ kiện,280000,90000
+SKU012,Kính Mát Chống UV,Phụ kiện,250000,80000
+SKU013,Giày Sneaker Phố Classic,Giày dép,890000,480000
+SKU014,Giày Cao Gót 7cm,Giày dép,620000,300000
+SKU015,Giày Lười Loafer Da,Giày dép,950000,520000
+SKU016,Dép Quai Ngang Đúc,Giày dép,190000,70000
+SKU017,Áo Tập Gym Dry-Fit,Đồ thể thao,280000,110000
+SKU018,Quần Legging Co Giãn 4 Chiều,Đồ thể thao,360000,140000
+SKU019,Bộ Nỉ Thể Thao Mùa Thu,Đồ thể thao,720000,380000
+SKU020,Áo Gió Thể Thao Chống Nước,Đồ thể thao,580000,270000
